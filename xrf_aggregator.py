@@ -4,13 +4,12 @@ import re
 import argparse
 import pandas as pd
 
-
-def join_xrf_data(input_dir, out_filename, e=False, v=False):
+def aggregate_xrf_data(input_dir, out_filename, e=False, v=False):
   if v:
     start_time = timeit.default_timer()
 
   if e:
-    # pandas won't export an excel file unless it ends with an approved excel extension
+    # pandas won't export an excel file unless it ends with an excel extension
     if not (out_filename.endswith('.xlsx') or out_filename.endswith('.xls')):
       out_filename = out_filename + '.xlsx'
   else:
@@ -28,13 +27,17 @@ def join_xrf_data(input_dir, out_filename, e=False, v=False):
       print('  '+f)
     print()
 
+  # does pandas need an initial column?
   output = pd.DataFrame({'filename' : []})
+
+  # need to specify a column order for export file
   column_order = []
 
   for xrf in xrfs:
     if v:
       print('Opening {}...'.format(xrf), end='\r')
     
+    # load file, first two rows are junk data so start at row 3 (zero indexed)
     df = pd.read_excel(input_dir+xrf, header=2)
 
     if v:
@@ -44,16 +47,18 @@ def join_xrf_data(input_dir, out_filename, e=False, v=False):
       column_order = df.columns.values.tolist()
     else:
       new_elements = [e for e in df.columns.values.tolist() if e not in column_order]
-      if len(new_elements) > 0:
+      if new_elements:
+        # preserve column order, but add new elements before last two columns (cr coh, cr incoh)
         column_order = column_order[:-2] + new_elements + column_order[-2:]
         if v:
           print('Additional elements found: {}'.format(new_elements))
-      else:
-        if v:
-          print('No additional elements found.')
+      # else:
+      #   if v:
+      #     print('No additional elements found.')
     
     output = output.append(df)
 
+  # filename value is junk and we don't want to export it
   column_order.remove('filename')
 
   print('\nExporting data to {}...'.format(out_filename), end='\r')
@@ -71,11 +76,11 @@ def join_xrf_data(input_dir, out_filename, e=False, v=False):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='stuff')
-  parser.add_argument('input_directory', type=str, help='Directory containing the XYZ csv files.')
+  parser.add_argument('input_directory', type=str, help='Directory containing the XRF Excel files.')
   parser.add_argument('output_filename', type=str, help='Name of the output file.')
   parser.add_argument('-e', '--excel', action='store_true', help='Export combined data as an xslx file.')
   parser.add_argument('-v', '--verbose', action='store_true', help='Display troubleshooting info.')
 
   args = parser.parse_args()
 
-  join_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+  aggregate_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
