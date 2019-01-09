@@ -96,15 +96,75 @@ def open_and_clean_file(file_path):
                    encoding='latin1')
 
   df = df.drop(drop_rows)
-  df.columns = df.columns.str.strip()
+  df = df.rename(str.strip, axis='columns')
   df = df.reset_index(drop=True)
   
   return df
 
 
-def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
+def clean_headers_add_units(dataframe, headers):
+  ''' Drop unwanted headers and add units row to data.
+
+  Any new columns will need to have a units row added to the list 
+  below, which is converted into a dict which is converted into 
+  a pandas dataframe which is then concatenated to the front of the 
+  combined data.
+
+  'SB DEPTH' is dropped because it is not relevant and often confusing.
+
   '''
-  Do stuff
+  headers_units = [['SECT NUM', ''],
+                   ['SECT DEPTH', 'cm'],
+                   ['CT', 'cm'],
+                   ['PWAmp', ''],
+                   ['PWVel', 'm/s'],
+                   ['Den1', 'g/cc'],
+                   ['MS1', 'SI x 10^-5'],
+                   ['Imp', ''],
+                   ['FP', ''],
+                   ['NGAM', 'CPS'],
+                   ['RES', 'Ohm-m'],
+                   ['Temp', '°C']]
+  
+  readable_headers = [['SECT NUM', 'SectionID'],
+                      ['SECT DEPTH', 'Section Depth'],
+                      ['CT', 'Sediment Thickness'],
+                      ['PWAmp', 'pWave Amplitude'],
+                      ['PWVel', 'pWave Velocity'],
+                      ['Den1', 'Gamma Density'],
+                      ['MS1', 'MS Loop'],
+                      ['Imp', 'Impedance'],
+                      ['FP', 'Fractional Porosity'],
+                      ['NGAM', 'Natural Gamma Radiation'],
+                      ['RES', 'Electrical Resistivity'],
+                      ['Temp', 'Temperature in Logging Room']]
+  
+  units = {item[0]: item[1] for item in headers_units}
+  new_headers = {item[0]: item[1] for item in readable_headers}
+
+  # Remove SB DEPTH column, it's machine junk
+  if 'SB DEPTH' in headers:
+    headers.remove('SB DEPTH')
+
+  for header in headers:
+    if header not in units:
+      print(f"WARNING: no associated units for header '{header}'.")
+    if header not in new_headers:
+      print(f"WARNING: no associated readable header for header '{header}'.")
+  
+  # Add units row
+  dataframe = pd.concat([pd.DataFrame([units]), dataframe], ignore_index=True)
+
+  # Fix headers
+  dataframe = dataframe.rename(columns=new_headers)
+  headers = [new_headers[header] for header in headers]
+
+  return dataframe, headers
+
+
+def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
+  ''' Aggregate cleaned data from different files and folders, export.
+
   '''
 
   start_time = timeit.default_timer()
@@ -113,7 +173,8 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   if verbose:
     print(f'Found data in {len(file_list)} folders to join.')
     for folder in file_list:
-      print(f'\t{folder[0].name}')
+      print(f'  {folder[0].name}')
+    print()
 
   export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
@@ -125,21 +186,25 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   # Will need to specify column order to match expected output
   column_order = []
 
-  for _, out, raw in file_list:
+  for d, out, raw in file_list:
     out_df = open_and_clean_file(out)
-    if verbose:
-      print(f'Loaded {out.name}\t({len(out_df)} rows)')
-
     raw_df = open_and_clean_file(raw)
+
     if verbose:
-      print(f'Loaded {raw.name}\t({len(raw_df)} rows)')
+      print(f'Loaded files from {d.name}')
+      print(f'  {out.name}\t({len(out_df)} rows)')
+      print(f'  {raw.name}\t({len(raw_df)} rows)')
+      print()
     
     if (len(raw_df)-len(out_df)) != 0:
-      print('ERROR: Length of .out file and .raw file are off by > 1. What should happen here? Exiting.')
+      print('ERROR: Length of .out file and .raw file are not equal. What should happen here? Exiting.')
       exit(1)
     
     out_df['Temp'] = raw_df['Temp']
 
+    # The below records column order for the first file, then adds 
+    # successive columns at the second to last place. The dataframe
+    # remains unordered, but when exporting the order will be applied
     if not column_order:
       column_order = out_df.columns.values.tolist()
     else:
@@ -149,24 +214,25 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
         column_order[-1:-1] = new_columns
         if verbose:
           print(f"Additional column{'s' if len(new_columns) > 1 else ''} found in \'{out.name}\':\n\t{', '.join(new_columns)}")
+          print()
 
+    # Append new data to existing data from other files
     combined_df = combined_df.append(out_df)
   
   if verbose:
-    print(f'All data combined.\t({len(combined_df)} rows)')
+    print(f'All data combined ({len(combined_df)} rows).')
   
-  if 'SB DEPTH' in column_order:
-    column_order.remove('SB DEPTH')
+  combined_df, column_order = clean_headers_add_units(combined_df, column_order)
 
+  print(f"Exporting combined data to '{export_filename}'", end='\r')
   if excel:
     writer = pd.ExcelWriter(export_filename, engine='xlsxwriter', options={'strings_to_numbers': True})
     combined_df[column_order].to_excel(writer, sheet_name='Sheet5test', index=False)
     writer.save()
   else:
-    combined_df[column_order].to_csv(export_filename, index=False, float_format='%g')
-  
-  print(f"Exported combined data to '{export_filename}'")
+    combined_df[column_order].to_csv(export_filename, index=False, float_format='%g', encoding='utf-8-sig')
 
+  print(f"Exported combined data to '{export_filename}' ")
 
   if verbose:
     end_time = timeit.default_timer()
