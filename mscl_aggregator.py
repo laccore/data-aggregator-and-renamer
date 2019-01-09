@@ -118,7 +118,7 @@ def clean_headers_add_units(dataframe, headers):
                    ['CT', 'cm'],
                    ['PWAmp', ''],
                    ['PWVel', 'm/s'],
-                   ['Den1', 'g/cc'],
+                   ['Den1', 'g/cm³'],
                    ['MS1', 'SI x 10^-5'],
                    ['Imp', ''],
                    ['FP', ''],
@@ -138,14 +138,18 @@ def clean_headers_add_units(dataframe, headers):
                       ['NGAM', 'Natural Gamma Radiation'],
                       ['RES', 'Electrical Resistivity'],
                       ['Temp', 'Temperature in Logging Room']]
+
+  drop_headers = ['SB DEPTH']
   
   units = {item[0]: item[1] for item in headers_units}
   new_headers = {item[0]: item[1] for item in readable_headers}
 
-  # Remove SB DEPTH column, it's machine junk
-  if 'SB DEPTH' in headers:
-    headers.remove('SB DEPTH')
+  # Remove unwanted column headers
+  for dh in drop_headers:
+    if dh in headers:
+      headers.remove(dh)
 
+  # Display warnings if an unrecognized machine header is seen
   for header in headers:
     if header not in units:
       print(f"WARNING: no associated units for header '{header}'.")
@@ -183,9 +187,10 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   # Initialize an empty dataframe to hold combined data
   combined_df = pd.DataFrame()
 
-  # Will need to specify column order to match expected output
+  # Need to specify column order to match expected output
   column_order = []
 
+  # Start combining data
   for d, out, raw in file_list:
     out_df = open_and_clean_file(out)
     raw_df = open_and_clean_file(raw)
@@ -200,11 +205,13 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
       print('ERROR: Length of .out file and .raw file are not equal. What should happen here? Exiting.')
       exit(1)
     
+    # Add 'Temp' column from .raw file to .out file dataframe
     out_df['Temp'] = raw_df['Temp']
 
-    # The below records column order for the first file, then adds 
-    # successive columns at the second to last place. The dataframe
-    # remains unordered, but when exporting the order will be applied
+    # This records column order for the first file, then adds 
+    # successive columns at the second to last place, keeping Temp
+    # in the last position. The dataframe remains unordered, but 
+    # when exporting the order will be applied.
     if not column_order:
       column_order = out_df.columns.values.tolist()
     else:
@@ -222,8 +229,10 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   if verbose:
     print(f'All data combined ({len(combined_df)} rows).')
   
+  # Drop unused headers, add units, and make headers human readable
   combined_df, column_order = clean_headers_add_units(combined_df, column_order)
 
+  # Export data
   print(f"Exporting combined data to '{export_filename}'", end='\r')
   if excel:
     writer = pd.ExcelWriter(export_filename, engine='xlsxwriter', options={'strings_to_numbers': True})
@@ -239,8 +248,8 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
     print(f'Completed in {round(end_time-start_time,2)} seconds.')
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='stuff')
-  parser.add_argument('input_directory', type=str, help='Directory containing the XRF Excel files.')
+  parser = argparse.ArgumentParser(description='Aggregate data from Geotek MSCL machine output.')
+  parser.add_argument('input_directory', type=str, help='Directory containing the MSCL folders (themselves containing .out and .raw files).')
   parser.add_argument('output_filename', type=str, help='Name of the output file.')
   parser.add_argument('-e', '--excel', action='store_true', help='Export combined data as an xslx file.')
   parser.add_argument('-v', '--verbose', action='store_true', help='Display troubleshooting info.')
