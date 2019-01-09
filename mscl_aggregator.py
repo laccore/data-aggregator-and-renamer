@@ -251,7 +251,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Aggregate data from Geotek MSCL machine output.')
   parser.add_argument('input_directory', type=str, help='Directory containing the MSCL folders (themselves containing .out and .raw files).')
   parser.add_argument('output_filename', type=str, help='Name of the output file.')
-  parser.add_argument('-e', '--excel', action='store_true', help='Export combined data as an xslx file.')
+  parser.add_argument('-e', '--excel', action='store_true', help='Export combined data as an Excel (xlsx) file.')
   parser.add_argument('-v', '--verbose', action='store_true', help='Display troubleshooting info.')
 
   args = parser.parse_args()
