@@ -102,7 +102,7 @@ def open_and_clean_file(file_path):
   return df
 
 
-def clean_headers_add_units(dataframe, headers):
+def clean_headers_add_units(dataframe, old_headers):
   ''' Drop unwanted headers and add units row to data.
 
   Any new columns will need to have a units row added to the list 
@@ -111,46 +111,27 @@ def clean_headers_add_units(dataframe, headers):
   combined data.
 
   'SB DEPTH' is dropped because it is not relevant and often confusing.
-
   '''
-  headers_units = [['SECT NUM', ''],
-                   ['SECT DEPTH', 'cm'],
-                   ['CT', 'cm'],
-                   ['PWAmp', ''],
-                   ['PWVel', 'm/s'],
-                   ['Den1', 'g/cm³'],
-                   ['MS1', 'SI x 10^-5'],
-                   ['Imp', ''],
-                   ['FP', ''],
-                   ['NGAM', 'CPS'],
-                   ['RES', 'Ohm-m'],
-                   ['Temp', '°C']]
-  
-  readable_headers = [['SECT NUM', 'SectionID'],
-                      ['SECT DEPTH', 'Section Depth'],
-                      ['CT', 'Sediment Thickness'],
-                      ['PWAmp', 'pWave Amplitude'],
-                      ['PWVel', 'pWave Velocity'],
-                      ['Den1', 'Gamma Density'],
-                      ['MS1', 'MS Loop'],
-                      ['Imp', 'Impedance'],
-                      ['FP', 'Fractional Porosity'],
-                      ['NGAM', 'Natural Gamma Radiation'],
-                      ['RES', 'Electrical Resistivity'],
-                      ['Temp', 'Temperature in Logging Room']]
 
+  units_file = 'units.txt'
+  headers_file = 'readable_headers.txt'
   drop_headers = ['SB DEPTH']
-  
-  units = {item[0]: item[1] for item in headers_units}
-  new_headers = {item[0]: item[1] for item in readable_headers}
+
+  with open(units_file, 'r+') as f:
+    headers_units = [r.split(',') for r in f.read().splitlines()]
+    units = {item[0]: item[1] for item in headers_units}
+
+  with open(headers_file, 'r+') as f:
+    readable_headers = [r.split(',') for r in f.read().splitlines()]
+    new_headers = {item[0]: item[1] for item in readable_headers}
 
   # Remove unwanted column headers
   for dh in drop_headers:
-    if dh in headers:
-      headers.remove(dh)
+    if dh in old_headers:
+      old_headers.remove(dh)
 
   # Display warnings if an unrecognized machine header is seen
-  for header in headers:
+  for header in old_headers:
     if header not in units:
       print(f"WARNING: no associated units for header '{header}'.")
     if header not in new_headers:
@@ -161,7 +142,7 @@ def clean_headers_add_units(dataframe, headers):
 
   # Fix headers
   dataframe = dataframe.rename(columns=new_headers)
-  headers = [new_headers[header] for header in headers]
+  headers = [new_headers[header] for header in old_headers]
 
   return dataframe, headers
 
@@ -240,7 +221,6 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
     writer.save()
   else:
     combined_df[column_order].to_csv(export_filename, index=False, float_format='%g', encoding='utf-8-sig')
-
   print(f"Exported combined data to '{export_filename}' ")
 
   if verbose:
