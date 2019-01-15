@@ -53,11 +53,13 @@ def validate_export_filename(export_filename, excel):
   Returns the validated/fixed export filename.
   '''
 
+  extension = export_filename.split('.')[-1]
+
   if excel:
-    if export_filename.split('.')[-1] not in ['xlsx', 'xls']:
+    if extension not in ['xlsx', 'xls']:
       export_filename += '.xlsx'
   else:
-    if not export_filename.endswith('.csv'):
+    if extension != 'csv':
       export_filename += '.csv'
 
   return export_filename
