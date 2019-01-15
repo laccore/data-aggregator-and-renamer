@@ -42,7 +42,7 @@ def generate_file_list(input_dir):
 
 
 def validate_export_filename(export_filename, excel):
-  '''Ensure the export filename is in a format compatible with pandas.
+  '''Ensure export extension matches flag, return corrected filename.
 
   xlswriter won't export an Excel file unless the file extension is a 
   valid Excel file extension (xsls, xls). This script assumes the flag 
@@ -54,7 +54,7 @@ def validate_export_filename(export_filename, excel):
   '''
 
   if excel:
-    if export_filename.split('.')[-1] not in ['.xlsx', '.xls']:
+    if export_filename.split('.')[-1] not in ['xlsx', 'xls']:
       export_filename += '.xlsx'
   else:
     if not export_filename.endswith('.csv'):
