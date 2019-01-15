@@ -44,10 +44,9 @@ def generate_file_list(input_dir):
 def validate_export_filename(export_filename, excel):
   '''Ensure the export filename is in a format compatible with pandas.
 
-  Pandas won't export an Excel file, even when using the to_excel 
-  function, unless the file extension is a valid Excel file extension 
-  (xsls, xls). This script assumes the flag indicates user intention, 
-  and will append a correct extension.
+  xlswriter won't export an Excel file unless the file extension is a 
+  valid Excel file extension (xsls, xls). This script assumes the flag 
+  indicates user intention, and will append a correct extension.
 
   If not using the Excel flag, this ensures the filename ends in .csv.
 
