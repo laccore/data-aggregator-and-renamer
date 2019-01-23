@@ -184,10 +184,6 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
       print(f'  {raw.name}\t({len(raw_df)} rows)')
       print()
     
-    if (len(raw_df)-len(out_df)) != 0:
-      print('ERROR: Length of .out file and .raw file are not equal. What should happen here? Exiting.')
-      exit(1)
-    
     # Add 'Temp' column from .raw file to .out file dataframe
     out_df['Temp'] = raw_df['Temp']
 
