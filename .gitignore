@@ -1,5 +1,3 @@
-xrfs/
-out.*
-mscls/
-old_mscls/
-olgi_xrfs/
+files_for_testing/
+files_for_dev/
+__pycache__
