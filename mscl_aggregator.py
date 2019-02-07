@@ -19,10 +19,11 @@ def generate_file_list(input_dir):
 
   with scandir(input_dir) as it:
     dir_list = [entry for entry in it 
-                if not entry.name.startswith('.') 
+                if not entry.name.startswith('.')
+                and entry.name != '__pycache__' 
                 and entry.is_dir()]
     # Sort folders by the "_part##" token, which is most consistently correct
-    dir_list = sorted(dir_list, key=lambda d: d.name.split('_')[-1])  
+    dir_list = sorted(dir_list, key=lambda d: int(d.name.split('_part')[-1]))
 
   for d in dir_list:
     with scandir(d) as it:
