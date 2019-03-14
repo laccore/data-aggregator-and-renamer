@@ -91,7 +91,7 @@ def clean_headers_add_units(dataframe, column_order, file_type, drop_headers=[])
       print(f"WARNING: no associated readable header for header '{header}'.")
   
   # Add units row
-  dataframe = pd.concat([pd.DataFrame([units]), dataframe], ignore_index=True)
+  dataframe = pd.concat([pd.DataFrame([units]), dataframe], ignore_index=True, sort=True)
 
   # Fix headers
   dataframe = dataframe.rename(columns=new_headers)
