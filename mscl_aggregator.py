@@ -19,9 +19,9 @@ def generate_file_list(input_dir):
 
   with scandir(input_dir) as it:
     dir_list = [entry for entry in it 
-                if not entry.name.startswith('.')
-                and entry.name != '__pycache__' 
-                and entry.is_dir()]
+                if 'mscl' in entry.name.lower()
+                and entry.is_dir()
+                and not entry.name.startswith('.')]
     # Sort folders by the "_part##" token, which is most consistently correct
     dir_list = sorted(dir_list, key=lambda d: int(d.name.split('_part')[-1]))
 
@@ -76,8 +76,8 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   skip_rows = [0]           # skip first row of mscl output files
 
   for d, out, raw in file_list:
-    out_df = utils.open_and_clean_file(out, skip_rows, [0])
-    raw_df = utils.open_and_clean_file(raw, skip_rows, [0,1])
+    out_df = utils.open_and_clean_file(out, '\t', skip_rows, [0])
+    raw_df = utils.open_and_clean_file(raw, '\t', skip_rows, [0,1])
 
     if verbose:
       print(f'Loaded files from {d.name}')
@@ -128,7 +128,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
     print(f'Completed in {round(end_time-start_time,2)} seconds.')
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='Aggregate data from Geotek MSCL machine output.')
+  parser = argparse.ArgumentParser(description='Aggregate data from Geotek MSCL-S machine output.')
   parser.add_argument('input_directory', type=str, help='Directory containing the MSCL folders (themselves containing .out and .raw files).')
   parser.add_argument('output_filename', type=str, help='Name of the output file.')
   parser.add_argument('-e', '--excel', action='store_true', help='Export combined data as an Excel (xlsx) file.')
