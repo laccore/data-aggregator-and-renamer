@@ -3,7 +3,29 @@ from os import scandir
 import argparse
 import pandas as pd
 import xlsxwriter
-import utils
+
+def validate_export_filename(export_filename, excel):
+  '''Ensure export extension matches flag, return corrected filename.
+
+  xlswriter won't export an Excel file unless the file extension is a 
+  valid Excel file extension (xsls, xls). This script assumes the flag 
+  indicates user intention, and will append a correct extension.
+
+  If not using the Excel flag, this ensures the filename ends in .csv.
+
+  Returns the validated/fixed export filename.
+  '''
+
+  extension = export_filename.split('.')[-1]
+
+  if excel:
+    if extension not in ['xlsx', 'xls']:
+      export_filename += '.xlsx'
+  else:
+    if extension != 'csv':
+      export_filename += '.csv'
+
+  return export_filename
 
 
 def generate_file_list(input_dir):
@@ -20,10 +42,12 @@ def generate_file_list(input_dir):
   with scandir(input_dir) as it:
     dir_list = [entry for entry in it 
                 if 'mscl' in entry.name.lower()
+                and '_part' in entry.name.lower()
                 and entry.is_dir()
                 and not entry.name.startswith('.')]
     # Sort folders by the "_part##" token, which is most consistently correct
-    dir_list = sorted(dir_list, key=lambda d: int(d.name.split('_part')[-1]))
+    # converting the number to float because there have been times where #.5 has been used
+    dir_list = sorted(dir_list, key=lambda d: float(d.name.split('_part')[-1]))
 
   for d in dir_list:
     with scandir(d) as it:
@@ -44,6 +68,76 @@ def generate_file_list(input_dir):
   return file_list
 
 
+def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
+  '''Open file in pandas, perform some file cleanup, return a dataframe
+
+  Opens the text files output from the Geotek equipment software 
+  with a number of flags, then drops the first row of 'data' which is 
+  just the units field.
+
+  Rows are dropped, whitespace is stripped from headers, and the index
+  is reset so data aligns later on.
+
+  Notes on files:
+  - tell pandas to treat empty fields as empty strings, not NaNs
+  - the 'latin1' encoding flag is needed to open the .raw files
+  '''
+
+  df = pd.read_csv(file_path, 
+                    delimiter=delimiter,
+                    skiprows=skip_rows,
+                    na_filter=False,
+                    encoding='latin1')
+  df = df.rename(str.strip, axis='columns')
+  df = df.drop(drop_rows)
+  df = df.reset_index(drop=True)
+
+  return df
+
+
+def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
+  ''' Drop unwanted headers and add units row to data.
+
+  Any new columns will need to have a units row added to the list 
+  below, which is converted into a dict which is converted into 
+  a pandas dataframe which is then concatenated to the front of the 
+  combined data.
+  '''
+
+  units_file = 'mscl_units.txt'
+  headers_file = 'mscl_headers.txt'
+
+  with open(units_file, 'r+') as f:
+    headers_units = [r.split(',') for r in f.read().splitlines()]
+    units = {item[0]: item[1] for item in headers_units}
+
+  with open(headers_file, 'r+') as f:
+    readable_headers = [r.split(',') for r in f.read().splitlines()]
+    new_headers = {item[0]: item[1] for item in readable_headers}
+
+  # Remove unwanted column headers
+  for dh in drop_headers:
+    if dh in column_order:
+      column_order.remove(dh)
+
+  # Display warnings if an unrecognized machine header is seen
+  for header in column_order:
+    if header not in units:
+      print(f"WARNING: no associated units for header '{header}'.")
+    if header not in new_headers:
+      print(f"WARNING: no associated readable header for header '{header}'.")
+  
+  # Add units row
+  dataframe = pd.concat([pd.DataFrame([units]), dataframe], ignore_index=True, sort=True)
+
+  # Fix headers
+  dataframe = dataframe.rename(columns=new_headers)
+  column_order = [new_headers[header] for header in column_order]
+  
+  return dataframe, column_order
+
+
+
 def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   ''' Aggregate cleaned data from different files and folders, export.
 
@@ -58,7 +152,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
       print(f'  {folder[0].name}')
     print()
 
-  export_filename = utils.validate_export_filename(out_filename, excel)
+  export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
     print(f"Adjusted export filename to '{export_filename}'")
 
@@ -76,8 +170,14 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   skip_rows = [0]           # skip first row of mscl output files
 
   for d, out, raw in file_list:
-    out_df = utils.open_and_clean_file(out, '\t', skip_rows, [0])
-    raw_df = utils.open_and_clean_file(raw, '\t', skip_rows, [0,1])
+    out_df = open_and_clean_file(file_path=out, 
+                                       delimiter='\t',
+                                       skip_rows=skip_rows,
+                                       drop_rows=[0])
+    raw_df = open_and_clean_file(file_path=raw,
+                                       delimiter='\t',
+                                       skip_rows=skip_rows,
+                                       drop_rows=[0,1])
 
     if verbose:
       print(f'Loaded files from {d.name}')
@@ -111,7 +211,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   
   # Drop unused headers, add units, and make headers human readable
   # 'SB DEPTH' is dropped because it is not relevant and often confusing.
-  combined_df, column_order = utils.clean_headers_add_units(combined_df, column_order, 'mscl', ['SB DEPTH'])
+  combined_df, column_order = clean_headers_add_units(combined_df, column_order, ['SB DEPTH'])
 
   # Export data
   print(f"Exporting combined data to '{export_filename}'", end='\r')
