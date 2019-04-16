@@ -1,65 +1,250 @@
 import timeit
-from os import listdir, path
-import re
+from os import scandir
+# import re
 import argparse
+import pandas as pd
 
-def join_xyz_data(input_dir, out_filename, v=False):
-  if v:
-    start_time = timeit.default_timer()
+
+def validate_export_filename(export_filename, excel):
+  '''Ensure export extension matches flag, return corrected filename.
+
+  xlswriter won't export an Excel file unless the file extension is a 
+  valid Excel file extension (xsls, xls). This script assumes the flag 
+  indicates user intention, and will append a correct extension.
+
+  If not using the Excel flag, this ensures the filename ends in .csv.
+
+  Returns the validated/fixed export filename.
+  '''
+
+  extension = export_filename.split('.')[-1]
+
+  if excel:
+    if extension not in ['xlsx', 'xls']:
+      export_filename += '.xlsx'
+  else:
+    if extension != 'csv':
+      export_filename += '.csv'
+
+  return export_filename
+
+
+def generate_file_list(input_dir):
+  '''Comb through directories to generate list of files to combine.
+
+  Given the input directory, scan through all directories and collect 
+  the xyz csv files.
   
-  dir_list = sorted(listdir(path.expanduser(input_dir)))
-  csvs = [f for f in dir_list if re.search(r'\w+\_XYZ\_[0-9]{8}\_part[0-9]+.*\.csv', f)]
-  # regex notes for future me, match the following rules (in order):
-  #   any non-whitespace (word) characters 1+ times
-  #   the string '_XYZ_'
-  #   8 digits (date)
-  #   the string '_part' and then any number 1+ times
-  #   any characters 0+ times (I'm least sure about this part, but sometimes filenames include weird notes)
-  #   files ending in '.csv'
+  Returns a list of nested DirEntry objects if [directory, file_name].
+  '''
 
-  if v:
-    print('Found {} files to join.\n'.format(len(csvs)))
-    print('Ignoring these files in {}:'.format(input_dir))
-    for f in sorted(set(dir_list)-set(csvs)):
-      print('  '+f)
+  file_list = []
+
+  with scandir(input_dir) as it:
+    dir_list = [entry for entry in it 
+                if 'xyz' in entry.name.lower()
+                and '_part' in entry.name.lower()
+                and entry.is_dir()
+                and not entry.name.startswith('.')]
+    # Sort folders by the "_part##" token, which is most consistently correct
+    # converting the number to float because there have been times where #.5 has been used
+    dir_list = sorted(dir_list, key=lambda d: float(d.name.split('_part')[-1]))
+
+  for d in dir_list:
+    with scandir(d) as it:
+      f_list = [entry for entry in it
+                if 'xyz' in entry.name.lower()
+                and entry.is_file()
+                and not entry.name.startswith('.') 
+                and entry.name.split('.')[-1] == 'csv']
+      if len(f_list) > 1:
+        print(f"ERROR: more than one file with extension .csv was found.")
+        print(f'Only one csv file required in folder {d.name}.')
+        exit(1)
+
+      elif len(f_list) == 0:
+        print(f'No .csv file was found in {d.name}.')
+
+      else:
+        f_list = [d] + f_list
+        file_list.append(f_list)
+
+  return file_list
+
+
+def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
+  '''Open file in pandas, perform some file cleanup, return a dataframe
+
+  Opens the text files output from the Geotek equipment software 
+  with a number of flags, then drops the first row of 'data' which is 
+  just the units field.
+
+  Rows are dropped, whitespace is stripped from headers, and the index
+  is reset so data aligns later on.
+
+  Notes on files:
+  - tell pandas to treat empty fields as empty strings, not NaNs
+  - the 'latin1' encoding flag is needed to open the .raw files
+  '''
+
+  df = pd.read_csv(file_path, 
+                    delimiter=delimiter,
+                    skiprows=skip_rows,
+                    na_filter=False,
+                    encoding='latin1',
+                    header=None)
+  
+  # here begins madness of trying to deal with a poorly formatted csv
+  row1 = df.iloc[0].tolist()
+  row2 = df.iloc[1].tolist()
+  headers = []
+  for pos, header in enumerate(row1):
+    if header.strip():
+      headers.append(header)
+    else:
+      headers.append(row2[pos].strip())
+  df.columns = headers
+
+  df = df.drop(drop_rows)
+  df = df.reset_index(drop=True)
+
+  return df
+
+
+def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
+  ''' Drop unwanted headers and add units row to data.
+
+  Any new columns will need to have a units row added to the list 
+  below, which is converted into a dict which is converted into 
+  a pandas dataframe which is then concatenated to the front of the 
+  combined data.
+  ''' 
+
+  units_file = 'xyz_units.txt'
+  headers_file = 'xyz_headers.txt'
+
+  with open(units_file, 'r+') as f:
+    headers_units = [r.split(',') for r in f.read().splitlines()]
+    units = {item[0]: item[1] for item in headers_units}
+
+  with open(headers_file, 'r+') as f:
+    readable_headers = [r.split(',') for r in f.read().splitlines()]
+    new_headers = {item[0]: item[1] for item in readable_headers}
+
+  # Remove unwanted column headers
+  for dh in drop_headers:
+    if dh in column_order:
+      column_order.remove(dh)
+
+  # Display warnings if an unrecognized machine header is seen
+  for header in column_order:
+    if header not in units:
+      print(f"WARNING: no associated units for header '{header}'.")
+    if header not in new_headers:
+      print(f"WARNING: no associated readable header for header '{header}'.")
+  
+  # Add units row
+  dataframe = pd.concat([pd.DataFrame([units]), dataframe], ignore_index=True, sort=True)
+
+  # Fix headers
+  dataframe = dataframe.rename(columns=new_headers)
+  column_order = [new_headers[header] for header in column_order]
+  
+  return dataframe, column_order
+
+
+def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
+  ''' Aggregate cleaned data from different files and folders, export.
+
+  '''
+  if verbose:
+    start_time = timeit.default_timer()
+
+  file_list = generate_file_list(input_dir)
+  if verbose:
+    print(f'Found data in {len(file_list)} folders to join.')
+    for folder in file_list:
+      print(f'  {folder[0].name}')
     print()
 
-  headers = ['Depth','Core Depth','Section','Section Depth','Laser Profiler','Magnetic Susceptibility','Greyscale Reflectance','Munsell Colour','CIE X','CIE Y','CIE Z','CIE L*','CIE a*','CIE b*','360','370','380','390','400','410','420','430','440','450','460','470','480','490','500','510','520','530','540','550','560','570','580','590','600','610','620','630','640','650','660','670','680','690','700','710','720','730','740']
-  units = ['m','m','','cm','mm','SI','','','','','','','','','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm','nm']
+  export_filename = validate_export_filename(out_filename, excel)
+  if verbose and export_filename != out_filename:
+    print(f"Adjusted export filename to '{export_filename}'")
 
-  combined_data = [headers, units]
+  # Initialize an empty dataframe to hold combined data
+  combined_df = pd.DataFrame()
 
-  def import_csv(infile):
-    with open(infile, 'r', encoding='utf-8-sig') as f:
-      rawdata = [r.split(',') for r in f.read().splitlines()][4:-1]
-    return rawdata
+  # Need to specify column order to match expected output
+  column_order = []
 
-  for csv in csvs:
-    if v:
-      print('Joining file {}...'.format(csv), end='\r')
-    combined_data += import_csv(csv)
-    if v:
-      print('Joined file {}    '.format(csv))
+  # Start combining data
+  # First two rows are skipped, they are file metadata we don't care about
+  # Unit row (row 0) is dropped and added later
+  skip_rows = [0,1]           # skip first two rows, junk data
 
+  # # Munsell Colour isn't a column we want, but it is sometimes accidentally exported
+  # drop_columns = ['Munsell Colour']
 
-  print('\nExporting data to {}...'.format(out_filename), end='\r')
+  for directory, file_name in file_list:
+    xyz_df = open_and_clean_file(file_path=file_name,
+                                       delimiter=',',
+                                       skip_rows=skip_rows,
+                                       drop_rows=[0,1])
+    
+    if verbose and len(xyz_df.columns) < 52:
+      print(f"Found only {len(xyz_df.columns)} columns in '{file_name}'")
 
-  with open(out_filename, 'w', encoding='utf-8-sig') as f:
-    for r in combined_data:
-      f.write(','.join(r)+'\n')
+    if verbose:
+      print(f'Loaded {len(xyz_df)} rows from {file_name.name} in {directory.name}')
+    
+    # This records column order for the first file, then adds 
+    # successive columns at the end. The dataframe remains unordered, 
+    # but when exporting the order will be applied.
+    if not column_order:
+      column_order = xyz_df.columns.values.tolist()
+    else:
+      new_columns = [c for c in xyz_df.columns.values.tolist() if c not in column_order]
+      if new_columns:
+        # Preserve column order, and add new columns before last ('Temp') column
+        column_order.append(new_columns)
+        if verbose:
+          print(f"Additional column{'s' if len(new_columns) > 1 else ''} found in \'{file_name.name}\':\n\t{', '.join(new_columns)}")
+          print()
 
-  print('Exported data to {}    \n'.format(out_filename))
-  if v:
+    combined_df = combined_df.append(xyz_df)
+  
+  if verbose:
+    print(f'All data combined ({len(combined_df)} rows).')
+  
+  # Drop unused columns, add units, and make headers human readable
+  drop_columns = ['Depth', 'Core Depth', 'Munsell Colour']
+  combined_df, column_order = clean_headers_add_units(dataframe=combined_df,
+                                                            column_order=column_order,
+                                                            drop_headers=drop_columns)
+
+  # Export data
+  print(f"Exporting combined data to '{export_filename}'", end='\r')
+  if excel:
+    writer = pd.ExcelWriter(export_filename, engine='xlsxwriter', options={'strings_to_numbers': True})
+    combined_df[column_order].to_excel(writer, sheet_name='Sheet5test', index=False)
+    writer.save()
+  else:
+    combined_df[column_order].to_csv(export_filename, index=False, float_format='%g', encoding='utf-8-sig')
+  print(f"Exported combined data to '{export_filename}' ")
+
+  if verbose:
     end_time = timeit.default_timer()
-    print('Completed in {0} seconds\n'.format(round(end_time-start_time,2)))
+    print(f'Completed in {round(end_time-start_time,2)} seconds.')
+
 
 if __name__ == '__main__':
-
-  parser = argparse.ArgumentParser(description='stuff')
+  parser = argparse.ArgumentParser(description='Aggregate data from Geotek MSCL-XYZ machine output.')
   parser.add_argument('input_directory', type=str, help='Directory containing the XYZ csv files.')
   parser.add_argument('output_filename', type=str, help='Name of the output file.')
+  parser.add_argument('-e', '--excel', action='store_true', help='Export combined data as an Excel (xlsx) file.')
   parser.add_argument('-v', '--verbose', action='store_true', help='Display troubleshooting info.')
 
   args = parser.parse_args()
 
-  join_xyz_data(args.input_directory, args.output_filename, args.verbose)
+  # join_xyz_data(args.input_directory, args.output_filename, args.verbose)
+  aggregate_xyz_data(args.input_directory, args.output_filename, args.excel, args.verbose)
