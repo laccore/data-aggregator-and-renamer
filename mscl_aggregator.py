@@ -20,10 +20,10 @@ def validate_export_filename(export_filename, excel):
 
   if excel:
     if extension not in ['xlsx', 'xls']:
-      export_filename += '.xlsx'
+      export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.xlsx'
   else:
     if extension != 'csv':
-      export_filename += '.csv'
+      export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.csv'
 
   return export_filename
 
@@ -206,7 +206,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
           print()
 
     # Append new data to existing data from other files
-    combined_df = combined_df.append(out_df)
+    combined_df = combined_df.append(out_df, sort=True)
   
   if verbose:
     print(f'All data combined ({len(combined_df)} rows).')
