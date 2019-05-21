@@ -28,7 +28,7 @@ def validate_export_filename(export_filename, excel):
   return export_filename
 
 
-def generate_file_list(input_dir):
+def generate_file_list(input_dir, verbose=False):
   '''Comb through directories to generate list of files to combine.
 
   Given the input directory, scan through all directories and collect 
@@ -64,6 +64,12 @@ def generate_file_list(input_dir):
       exit(1)
 
     file_list.append(f_list)
+  
+  if verbose:
+    print(f'Found data in {len(file_list)} folders to join.')
+    for folder in file_list:
+      print(f'  {folder[0].name}')
+    print()
 
   return file_list
 
@@ -145,12 +151,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   if verbose:
     start_time = timeit.default_timer()
 
-  file_list = generate_file_list(input_dir)
-  if verbose:
-    print(f'Found data in {len(file_list)} folders to join.')
-    for folder in file_list:
-      print(f'  {folder[0].name}')
-    print()
+  file_list = generate_file_list(input_dir, verbose)
 
   export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
