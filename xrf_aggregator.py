@@ -36,12 +36,8 @@ def validate_export_filename(export_filename, excel):
 
 
 def generate_file_list(input_dir, verbose=False):
-  '''Comb through directories to generate list of files to combine.
-
-  Given the input directory, scan through all directories and collect 
-  the paired files needed to aggregate data (out and raw).
+  '''Find all Excel (.xlsx) files in the input directory
   
-  Returns a nested list of pairs of DirEntry objects.
   '''
 
   file_list = sorted(listdir(path.expanduser(input_dir)))
