@@ -1,5 +1,5 @@
 import timeit
-from os import scandir
+from os import scandir, path
 import argparse
 import pandas as pd
 import xlsxwriter
@@ -155,6 +155,8 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
     print(f"Adjusted export filename to '{export_filename}'")
+  
+  export_path = path.join(input_dir, export_filename)
 
   # Initialize an empty dataframe to hold combined data
   combined_df = pd.DataFrame()
@@ -214,14 +216,14 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   combined_df, column_order = clean_headers_add_units(combined_df, column_order, ['SB DEPTH'])
 
   # Export data
-  print(f"Exporting combined data to '{export_filename}'", end='\r')
+  print(f"Exporting combined data to '{export_path}'", end='\r')
   if excel:
-    writer = pd.ExcelWriter(export_filename, engine='xlsxwriter', options={'strings_to_numbers': True})
+    writer = pd.ExcelWriter(export_path, engine='xlsxwriter', options={'strings_to_numbers': True})
     combined_df[column_order].to_excel(writer, sheet_name='Sheet5test', index=False)
     writer.save()
   else:
-    combined_df[column_order].to_csv(export_filename, index=False, float_format='%g', encoding='utf-8-sig')
-  print(f"Exported combined data to '{export_filename}' ")
+    combined_df[column_order].to_csv(export_path, index=False, float_format='%g', encoding='utf-8-sig')
+  print(f"Exported combined data to '{export_path}' ")
 
   if verbose:
     end_time = timeit.default_timer()
@@ -236,4 +238,4 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
 
-  aggregate_mscl_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+  aggregate_mscl_data(args.input_directory, args.out_filename, args.excel, args.verbose)
