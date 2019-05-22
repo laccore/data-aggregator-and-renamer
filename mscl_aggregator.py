@@ -1,5 +1,5 @@
 import timeit
-from os import scandir
+from os import scandir, path
 import argparse
 import pandas as pd
 import xlsxwriter
@@ -20,15 +20,21 @@ def validate_export_filename(export_filename, excel):
 
   if excel:
     if extension not in ['xlsx', 'xls']:
-      export_filename += '.xlsx'
+      if len(export_filename.split('.')) > 1:
+        export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.xlsx'
+      else:
+        export_filename += '.xlsx'
   else:
     if extension != 'csv':
-      export_filename += '.csv'
+      if len(export_filename.split('.')) > 1:
+        export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.csv'
+      else:
+        export_filename += '.csv'
 
   return export_filename
 
 
-def generate_file_list(input_dir):
+def generate_file_list(input_dir, verbose=False):
   '''Comb through directories to generate list of files to combine.
 
   Given the input directory, scan through all directories and collect 
@@ -64,6 +70,12 @@ def generate_file_list(input_dir):
       exit(1)
 
     file_list.append(f_list)
+  
+  if verbose:
+    print(f'Found data in {len(file_list)} folders to join.')
+    for folder in file_list:
+      print(f'  {folder[0].name}')
+    print()
 
   return file_list
 
@@ -145,16 +157,13 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   if verbose:
     start_time = timeit.default_timer()
 
-  file_list = generate_file_list(input_dir)
-  if verbose:
-    print(f'Found data in {len(file_list)} folders to join.')
-    for folder in file_list:
-      print(f'  {folder[0].name}')
-    print()
+  file_list = generate_file_list(input_dir, verbose)
 
   export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
     print(f"Adjusted export filename to '{export_filename}'")
+  
+  export_path = path.join(input_dir, export_filename)
 
   # Initialize an empty dataframe to hold combined data
   combined_df = pd.DataFrame()
@@ -204,7 +213,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
           print()
 
     # Append new data to existing data from other files
-    combined_df = combined_df.append(out_df)
+    combined_df = combined_df.append(out_df, sort=True)
   
   if verbose:
     print(f'All data combined ({len(combined_df)} rows).')
@@ -214,14 +223,14 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   combined_df, column_order = clean_headers_add_units(combined_df, column_order, ['SB DEPTH'])
 
   # Export data
-  print(f"Exporting combined data to '{export_filename}'", end='\r')
+  print(f"Exporting combined data to '{export_path}'", end='\r')
   if excel:
-    writer = pd.ExcelWriter(export_filename, engine='xlsxwriter', options={'strings_to_numbers': True})
+    writer = pd.ExcelWriter(export_path, engine='xlsxwriter', options={'strings_to_numbers': True})
     combined_df[column_order].to_excel(writer, sheet_name='Sheet5test', index=False)
     writer.save()
   else:
-    combined_df[column_order].to_csv(export_filename, index=False, float_format='%g', encoding='utf-8-sig')
-  print(f"Exported combined data to '{export_filename}' ")
+    combined_df[column_order].to_csv(export_path, index=False, float_format='%g', encoding='utf-8-sig')
+  print(f"Exported combined data to '{export_path}' ")
 
   if verbose:
     end_time = timeit.default_timer()
@@ -236,4 +245,4 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
 
-  aggregate_mscl_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+  aggregate_mscl_data(args.input_directory, args.out_filename, args.excel, args.verbose)

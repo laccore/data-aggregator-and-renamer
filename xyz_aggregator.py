@@ -21,10 +21,16 @@ def validate_export_filename(export_filename, excel):
 
   if excel:
     if extension not in ['xlsx', 'xls']:
-      export_filename += '.xlsx'
+      if len(export_filename.split('.')) > 1:
+        export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.xlsx'
+      else:
+        export_filename += '.xlsx'
   else:
     if extension != 'csv':
-      export_filename += '.csv'
+      if len(export_filename.split('.')) > 1:
+        export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.csv'
+      else:
+        export_filename += '.csv'
 
   return export_filename
 
