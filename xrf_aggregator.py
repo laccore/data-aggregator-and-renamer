@@ -1,5 +1,5 @@
 import timeit
-from os import listdir, path
+from os import scandir, path
 import re
 import argparse
 import pandas as pd
@@ -35,22 +35,66 @@ def validate_export_filename(export_filename, excel):
   return export_filename
 
 
+def process_core_id(core_id):
+  ''' This function splits all parts of a LacCore CoreID, casts the numeric 
+  portions as ints (so sorting works properly), and returns a tuple with all 
+  sortable parts separated. Used for sorting a directory list. 
+
+  LacCore Core IDs are in the format 
+  PROJECT-[LAKENAME][2DIGITYEAR]-[SITE][HOLE]-[CORE][TOOL]-SECTION
+  e.g. PROJ-LAK19-1A-1L-1
+  '''
+  parts = core_id.split(' ')[0].split('-')
+
+  return (
+    *parts[:2],
+    int(parts[2][:-1]),
+    parts[2][-1],
+    int(parts[3][:-1]),
+    parts[3][-1],
+    int(parts[-1])
+  )
+
+
 def generate_file_list(input_dir, verbose=False):
-  '''Find all Excel (.xlsx) files in the input directory
+  '''Rewrite after code rewrite
   
   '''
 
-  file_list = sorted(listdir(path.expanduser(input_dir)))
-  xrfs = [f for f in file_list if re.search(r'.*\.xlsx', f)]
+  file_list = []
+
+  with scandir(input_dir) as it:
+    dir_list = [entry for entry in it 
+                if entry.is_dir()
+                and not entry.name.startswith('.')
+                and not '_xr' in entry.name.lower()]
+    dir_list = sorted(dir_list, key=lambda d: process_core_id(d.name))
+    for d in dir_list:
+      print(d.name)
+
+  # for d in dir_list:
+  #   with scandir(d) as it:
+  #     f_list = [entry for entry in it
+  #               if not entry.name.startswith('.') 
+  #               and entry.is_file()
+  #               and entry.name.split('.')[-1] in ['out', 'raw']]
+  #     f_list = sorted(f_list, key=lambda f: f.name.split('.')[-1])
+  #     f_list = [d] + f_list
+
+  #   if len(f_list) != 3:
+  #     print(f"ERROR: {'more' if len(f_list) > 3 else 'less'} than two files with extension .raw or .out were found.")
+  #     print(f'Exactly one of each file required in folder {d.name}.')
+  #     exit(1)
+
+  #   file_list.append(f_list)
   
-  if verbose:
-    print(f'Found {len(xrfs)} files to join.')
-    print('Ignoring these files in {}:'.format(input_dir[:-1] if input_dir[-1] == '/' else input_dir))
-    for f in sorted(set(listdir(path.expanduser(input_dir)))-set(xrfs)):
-      print(f'\t{f}')
-    print()
-  
-  return xrfs
+  # if verbose:
+  #   print(f'Found data in {len(file_list)} folders to join.')
+  #   for folder in file_list:
+  #     print(f'  {folder[0].name}')
+  #   print()
+
+  return file_list
 
 
 def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
@@ -122,4 +166,5 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
 
-  aggregate_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+  generate_file_list(args.input_directory)
+  # aggregate_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
