@@ -61,6 +61,9 @@ def generate_file_list(input_dir, verbose=False):
   
   '''
 
+  if verbose:
+    print(f'Scanning subfolders of {input_dir} for .xslx files.')
+
   file_list = []
 
   with scandir(input_dir) as it:
@@ -69,30 +72,26 @@ def generate_file_list(input_dir, verbose=False):
                 and not entry.name.startswith('.')
                 and not '_xr' in entry.name.lower()]
     dir_list = sorted(dir_list, key=lambda d: process_core_id(d.name))
-    for d in dir_list:
-      print(d.name)
 
-  # for d in dir_list:
-  #   with scandir(d) as it:
-  #     f_list = [entry for entry in it
-  #               if not entry.name.startswith('.') 
-  #               and entry.is_file()
-  #               and entry.name.split('.')[-1] in ['out', 'raw']]
-  #     f_list = sorted(f_list, key=lambda f: f.name.split('.')[-1])
-  #     f_list = [d] + f_list
+  for d in dir_list:
+    with scandir(d) as it:
+      f_list = [entry for entry in it
+                if not entry.name.startswith('.') 
+                and entry.is_file()
+                and entry.name.split('.')[-1] == 'xlsx']
 
-  #   if len(f_list) != 3:
-  #     print(f"ERROR: {'more' if len(f_list) > 3 else 'less'} than two files with extension .raw or .out were found.")
-  #     print(f'Exactly one of each file required in folder {d.name}.')
-  #     exit(1)
+    if len(f_list) != 1:
+      print(f'ERROR: {len(f_list)} files with extension .xlsx were found.')
+      print(f'Exactly one xslx file required in folder {d.name}.')
+      exit(1)
 
-  #   file_list.append(f_list)
+    file_list.append(f_list[0])
   
-  # if verbose:
-  #   print(f'Found data in {len(file_list)} folders to join.')
-  #   for folder in file_list:
-  #     print(f'  {folder[0].name}')
-  #   print()
+  if verbose:
+    print(f'Found data in {len(file_list)} folders to aggregate:')
+    for f in file_list:
+      print(f"  {f.path.split('/')[-2]}")
+    print()
 
   return file_list
 
@@ -117,13 +116,13 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
 
   for xrf in xrfs:
     if verbose:
-      print('Opening {}...'.format(xrf), end='\r')
+      print('Opening {}...'.format(xrf.name), end='\r')
     
     # load file, first two rows are junk data so start at row 3 (zero indexed)
     df = pd.read_excel(path.join(input_dir,xrf), header=2)
 
     if verbose:
-      print('Loaded {}    '.format(xrf))
+      print('Loaded {}    '.format(xrf.name))
 
     if not column_order:
       column_order = df.columns.values.tolist()
@@ -133,10 +132,8 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
         # preserve column order, but add new elements before last two columns (cr coh, cr incoh)
         column_order = column_order[:-2] + new_elements + column_order[-2:]
         if verbose:
-          print('Additional elements found: {}'.format(new_elements))
-      # else:
-      #   if v:
-      #     print('No additional elements found.')
+          print(f"Additional element{'s' if len(new_elements) > 1 else ''} found: {', '.join(new_elements)}")
+          print()
     
     output = output.append(df, sort=True)
 
@@ -144,18 +141,20 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
   column_order.remove('filename')
 
   if verbose:
-    print('\nExporting data to {}...'.format(export_path), end='\r')
+    print()
+    print('Exporting data to {}...'.format(export_path), end='\r')
 
   if excel:
     output[column_order].to_excel(export_path, index=False)
   else:
     output[column_order].to_csv(export_path, index=False)
 
-  print('Exported data to {}    \n'.format(export_path))
+  print('Exported data to {}    '.format(export_path))
 
   if verbose:
     end_time = timeit.default_timer()
-    print('Completed in {} seconds\n'.format(round(end_time-start_time,2)))
+    print()
+    print('Completed in {} seconds'.format(round(end_time-start_time,2)))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='stuff')
@@ -166,5 +165,4 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
 
-  generate_file_list(args.input_directory)
-  # aggregate_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+  aggregate_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
