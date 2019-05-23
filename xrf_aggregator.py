@@ -96,16 +96,14 @@ def generate_file_list(input_dir, verbose=False):
   return file_list
 
 
-def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
+def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, verbose=False):
   if verbose:
     start_time = timeit.default_timer()
 
   export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
     print(f"Adjusted export filename to '{export_filename}'")
-  
-  export_path = path.join(input_dir, export_filename)
-  
+    
   xrfs = generate_file_list(input_dir, verbose)
 
   # does pandas need an initial column?
@@ -137,32 +135,65 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
     
     output = output.append(df, sort=True)
 
-  # filename value is junk and we don't want to export it
+  # don't export column filename
   column_order.remove('filename')
 
   if verbose:
     print()
-    print('Exporting data to {}...'.format(export_path), end='\r')
 
-  if excel:
-    output[column_order].to_excel(export_path, index=False)
+  if not sitehole:
+    export_path = path.join(input_dir, export_filename)
+    print(f'Exporting data ({len(output)} rows) to {export_path}...', end='\r')
+
+    if excel:
+      output[column_order].to_excel(export_path, index=False)
+    else:
+      output[column_order].to_csv(export_path, index=False)
+    
+    print(f'Exported data ({len(output)} rows) to {export_path}    ')
+  
   else:
-    output[column_order].to_csv(export_path, index=False)
+    if 'SectionID' not in df.columns.values.tolist():
+      print("ERROR: column 'SectionID' not found, must be present to export by SiteHole.")
+      exit(1)
+    # create the sitehole column
+    output['shfe'] = output['SectionID'].str.split('-', expand=True)[2]
 
-  print('Exported data to {}    '.format(export_path))
+    holes = output['shfe'].unique()
+
+    for hole in holes:
+      filtered_export_filename = '.'.join(export_filename.split('.')[:-1]) + '-' + hole + '.' + export_filename.split('.')[-1]
+      export_path = path.join(input_dir, filtered_export_filename)
+
+      filtered_data = output.loc[output['shfe'] == hole]
+
+      print(f'Exporting data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}...', end='\r')
+
+      if excel:
+        filtered_data[column_order].to_excel(export_path, index=False)
+      else:
+        filtered_data[column_order].to_csv(export_path, index=False)
+    
+      print(f'Exported data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}    ')
 
   if verbose:
     end_time = timeit.default_timer()
     print()
     print('Completed in {} seconds'.format(round(end_time-start_time,2)))
 
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='stuff')
   parser.add_argument('input_directory', type=str, help='Directory containing the XRF Excel files.')
   parser.add_argument('output_filename', type=str, help='Name of the output file.')
   parser.add_argument('-e', '--excel', action='store_true', help='Export combined data as an xslx file.')
+  parser.add_argument('-s', '--sitehole', action='store_true', help='Export data to multiple files, grouped by SiteHole.')
   parser.add_argument('-v', '--verbose', action='store_true', help='Display troubleshooting info.')
 
   args = parser.parse_args()
 
-  aggregate_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+  aggregate_xrf_data(input_dir=args.input_directory,
+                     out_filename=args.output_filename,
+                     excel=args.excel,
+                     sitehole=args.sitehole,
+                     verbose=args.verbose)
