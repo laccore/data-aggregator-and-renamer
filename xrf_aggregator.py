@@ -1,5 +1,5 @@
 import timeit
-from os import listdir, path
+from os import scandir, path
 import re
 import argparse
 import pandas as pd
@@ -35,22 +35,65 @@ def validate_export_filename(export_filename, excel):
   return export_filename
 
 
+def process_core_id(core_id):
+  ''' This function splits all parts of a LacCore CoreID, casts the numeric 
+  portions as ints (so sorting works properly), and returns a tuple with all 
+  sortable parts separated. Used for sorting a directory list. 
+
+  LacCore Core IDs are in the format 
+  PROJECT-[LAKENAME][2DIGITYEAR]-[SITE][HOLE]-[CORE][TOOL]-SECTION
+  e.g. PROJ-LAK19-1A-1L-1
+  '''
+  parts = core_id.split(' ')[0].split('-')
+
+  return (
+    *parts[:2],
+    int(parts[2][:-1]),
+    parts[2][-1],
+    int(parts[3][:-1]),
+    parts[3][-1],
+    int(parts[-1])
+  )
+
+
 def generate_file_list(input_dir, verbose=False):
-  '''Find all Excel (.xlsx) files in the input directory
+  '''Rewrite after code rewrite
   
   '''
 
-  file_list = sorted(listdir(path.expanduser(input_dir)))
-  xrfs = [f for f in file_list if re.search(r'.*\.xlsx', f)]
+  if verbose:
+    print(f'Scanning subfolders of {input_dir} for .xslx files.')
+
+  file_list = []
+
+  with scandir(input_dir) as it:
+    dir_list = [entry for entry in it 
+                if entry.is_dir()
+                and not entry.name.startswith('.')
+                and not '_xr' in entry.name.lower()]
+    dir_list = sorted(dir_list, key=lambda d: process_core_id(d.name))
+
+  for d in dir_list:
+    with scandir(d) as it:
+      f_list = [entry for entry in it
+                if not entry.name.startswith('.') 
+                and entry.is_file()
+                and entry.name.split('.')[-1] == 'xlsx']
+
+    if len(f_list) != 1:
+      print(f'ERROR: {len(f_list)} files with extension .xlsx were found.')
+      print(f'Exactly one xslx file required in folder {d.name}.')
+      exit(1)
+
+    file_list.append(f_list[0])
   
   if verbose:
-    print(f'Found {len(xrfs)} files to join.')
-    print('Ignoring these files in {}:'.format(input_dir[:-1] if input_dir[-1] == '/' else input_dir))
-    for f in sorted(set(listdir(path.expanduser(input_dir)))-set(xrfs)):
-      print(f'\t{f}')
+    print(f'Found data in {len(file_list)} folders to aggregate:')
+    for f in file_list:
+      print(f"  {f.path.split('/')[-2]}")
     print()
-  
-  return xrfs
+
+  return file_list
 
 
 def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
@@ -73,13 +116,13 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
 
   for xrf in xrfs:
     if verbose:
-      print('Opening {}...'.format(xrf), end='\r')
+      print('Opening {}...'.format(xrf.name), end='\r')
     
     # load file, first two rows are junk data so start at row 3 (zero indexed)
     df = pd.read_excel(path.join(input_dir,xrf), header=2)
 
     if verbose:
-      print('Loaded {}    '.format(xrf))
+      print('Loaded {}    '.format(xrf.name))
 
     if not column_order:
       column_order = df.columns.values.tolist()
@@ -89,10 +132,8 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
         # preserve column order, but add new elements before last two columns (cr coh, cr incoh)
         column_order = column_order[:-2] + new_elements + column_order[-2:]
         if verbose:
-          print('Additional elements found: {}'.format(new_elements))
-      # else:
-      #   if v:
-      #     print('No additional elements found.')
+          print(f"Additional element{'s' if len(new_elements) > 1 else ''} found: {', '.join(new_elements)}")
+          print()
     
     output = output.append(df, sort=True)
 
@@ -100,18 +141,20 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, verbose=False):
   column_order.remove('filename')
 
   if verbose:
-    print('\nExporting data to {}...'.format(export_path), end='\r')
+    print()
+    print('Exporting data to {}...'.format(export_path), end='\r')
 
   if excel:
     output[column_order].to_excel(export_path, index=False)
   else:
     output[column_order].to_csv(export_path, index=False)
 
-  print('Exported data to {}    \n'.format(export_path))
+  print('Exported data to {}    '.format(export_path))
 
   if verbose:
     end_time = timeit.default_timer()
-    print('Completed in {} seconds\n'.format(round(end_time-start_time,2)))
+    print()
+    print('Completed in {} seconds'.format(round(end_time-start_time,2)))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='stuff')
