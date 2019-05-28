@@ -7,9 +7,9 @@ import xrf_aggregator as xrf
 
 @Gooey(program_name='Data Aggregator',
        navigation='TABBED',
-       default_size=(600, 650))
+       default_size=(600, 680))
 def main():
-  parser = GooeyParser(description='Aggregate data from Geotek and _____ machine outputs.')
+  parser = GooeyParser(description='Aggregate data from Geotek and ITRAX machine outputs.')
 
   subs = parser.add_subparsers(help='commands', dest='command')
 
