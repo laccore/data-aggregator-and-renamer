@@ -1,8 +1,8 @@
 import timeit
-from os import scandir, path
 import argparse
 import pandas as pd
 import xlsxwriter
+from pathlib import Path
 
 def validate_export_filename(export_filename, excel):
   '''Ensure export extension matches flag, return corrected filename.
@@ -45,27 +45,26 @@ def generate_file_list(input_dir, verbose=False):
 
   file_list = []
 
-  with scandir(input_dir) as it:
-    dir_list = [entry for entry in it 
-                if 'mscl' in entry.name.lower()
-                and '_part' in entry.name.lower()
-                and entry.is_dir()
-                and not entry.name.startswith('.')]
-    # Sort folders by the "_part##" token, which is most consistently correct
-    # converting the number to float because there have been times where #.5 has been used
-    dir_list = sorted(dir_list, key=lambda d: float(d.name.split('_part')[-1]))
+  p = Path(input_dir).iterdir()
+  dir_list = [entry for entry in p 
+              if 'mscl' in entry.name.lower()
+              and '_part' in entry.name.lower()
+              and entry.is_dir()
+              and not entry.name.startswith('.')]
+  # Sort folders by the "_part##" token, which is most consistently correct
+  # converting the number to float because there have been times where #.5 has been used
+  dir_list = sorted(dir_list, key=lambda d: float(d.name.split('_part')[-1]))
 
   for d in dir_list:
-    with scandir(d) as it:
-      f_list = [entry for entry in it
-                if not entry.name.startswith('.') 
-                and entry.is_file()
-                and entry.name.split('.')[-1] in ['out', 'raw']]
-      f_list = sorted(f_list, key=lambda f: f.name.split('.')[-1])
-      f_list = [d] + f_list
+    p = Path(d).iterdir()
+    f_list = [entry for entry in p
+              if not entry.name.startswith('.') 
+              and entry.is_file()
+              and entry.suffix in ['.out', '.raw']]
+    f_list = sorted(f_list, key=lambda f: f.name.split('.')[-1])
 
-    if len(f_list) != 3:
-      print(f"ERROR: {'more' if len(f_list) > 3 else 'less'} than two files with extension .raw or .out were found.")
+    if len(f_list) != 2:
+      print(f"ERROR: {'more' if len(f_list) > 2 else 'less'} than two files with extension .raw or .out were found.")
       print(f'Exactly one of each file required in folder {d.name}.')
       exit(1)
 
@@ -73,8 +72,8 @@ def generate_file_list(input_dir, verbose=False):
   
   if verbose:
     print(f'Found data in {len(file_list)} folders to join.')
-    for folder in file_list:
-      print(f'  {folder[0].name}')
+    for f in file_list:
+      print(f'\t{f[0].parts[-2]}')
     print()
 
   return file_list
@@ -156,6 +155,8 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   '''
   if verbose:
     start_time = timeit.default_timer()
+  
+  input_dir = Path(input_dir)
 
   file_list = generate_file_list(input_dir, verbose)
 
@@ -163,7 +164,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   if verbose and export_filename != out_filename:
     print(f"Adjusted export filename to '{export_filename}'")
   
-  export_path = path.join(input_dir, export_filename)
+  export_path = input_dir / export_filename
 
   # Initialize an empty dataframe to hold combined data
   combined_df = pd.DataFrame()
@@ -178,7 +179,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
   # files.
   skip_rows = [0]           # skip first row of mscl output files
 
-  for d, out, raw in file_list:
+  for out, raw in file_list:
     out_df = open_and_clean_file(file_path=out, 
                                        delimiter='\t',
                                        skip_rows=skip_rows,
@@ -189,7 +190,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
                                        drop_rows=[0,1])
 
     if verbose:
-      print(f'Loaded files from {d.name}')
+      print(f'Loaded files from {out.parts[-2]}')
       print(f'  {out.name}\t({len(out_df)} rows)')
       print(f'  {raw.name}\t({len(raw_df)} rows)')
       print()
@@ -245,4 +246,4 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
 
-  aggregate_mscl_data(args.input_directory, args.out_filename, args.excel, args.verbose)
+  aggregate_mscl_data(args.input_directory, args.output_filename, args.excel, args.verbose)
