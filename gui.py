@@ -7,7 +7,7 @@ import xrf_aggregator as xrf
 
 @Gooey(program_name='Data Aggregator',
        navigation='TABBED',
-       default_size=(600, 600))
+       default_size=(600, 650))
 def main():
   parser = GooeyParser(description='Aggregate data from Geotek and _____ machine outputs.')
 
@@ -42,12 +42,16 @@ def main():
                                 metavar='Input Directory',
                                 type=str,
                                 widget='DirChooser',
-                                help='Directory containing the XRF Excel files.')
+                                help='Directory containing the XRF folders.')
   input_output_xrf.add_argument('output_filename',
                                 metavar='Output Filename',
                                 type=str,
                                 help='Name of the combined output file.')
   options_xrf = xrf_parser.add_argument_group('Options', gooey_options={'columns': 1})
+  options_xrf.add_argument('-s', '--sitehole',
+                           metavar='Export by SiteHole',
+                           action='store_true',
+                           help='Split aggregated data by SiteHole and export each file individually.')
   options_xrf.add_argument('-e', '--excel',
                            metavar='Export as Excel',
                            action='store_true',
@@ -61,11 +65,18 @@ def main():
   args = parser.parse_args()
 
   if args.command == 'MSCL-S':
-    mst.aggregate_mscl_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+    mst.aggregate_mscl_data(input_dir=args.input_directory,
+                            out_filename=args.output_filename,
+                            excel=args.excel,
+                            verbose=args.verbose)
   elif args.command == 'MSCL-XYZ':
     print('Soon.')
   elif args.command == 'XRF':
-    xrf.aggregate_xrf_data(args.input_directory, args.output_filename, args.excel, args.verbose)
+    xrf.aggregate_xrf_data(input_dir=args.input_directory, 
+                           out_filename=args.output_filename,
+                           excel=args.excel,
+                           sitehole=args.sitehole,
+                           verbose=args.verbose)
   else:
     print(f"Something went wrong. Invalid data type: {args.data_type}")
 
