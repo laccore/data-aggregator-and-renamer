@@ -117,7 +117,7 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
       print('Opening {}...'.format(xrf.name), end='\r')
     
     # load file, first two rows are junk data so start at row 3 (zero indexed)
-    df = pd.read_excel(xrf.path, header=2, skip_blank_lines=True)
+    df = pd.read_excel(xrf.path, header=2)
 
     if verbose:
       print('Loaded {}    '.format(xrf.name))
