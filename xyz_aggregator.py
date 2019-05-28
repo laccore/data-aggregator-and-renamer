@@ -1,5 +1,4 @@
 import timeit
-# from os import scandir, path
 from pathlib import Path
 import argparse
 import pandas as pd
