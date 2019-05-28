@@ -1,5 +1,6 @@
 import timeit
-from os import scandir, path
+# from os import scandir, path
+from pathlib import Path
 import argparse
 import pandas as pd
 
@@ -45,34 +46,34 @@ def generate_file_list(input_dir):
 
   file_list = []
 
-  with scandir(input_dir) as it:
-    dir_list = [entry for entry in it 
-                if 'xyz' in entry.name.lower()
-                and '_part' in entry.name.lower()
-                and entry.is_dir()
-                and not entry.name.startswith('.')]
-    # Sort folders by the "_part##" token, which is most consistently correct
-    # converting the number to float because there have been times where #.5 has been used
-    dir_list = sorted(dir_list, key=lambda d: float(d.name.split('_part')[-1]))
+  p = Path(input_dir).iterdir()
+  dir_list = [entry for entry in p
+              if 'xyz' in entry.name.lower()
+              and '_part' in entry.name.lower()
+              and entry.is_dir()
+              and not entry.name.startswith('.')]
+  # Sort folders by the "_part##" token, which is most consistently correct
+  # converting the number to float because there have been times where #.5 has been used
+  dir_list = sorted(dir_list, key=lambda d: float(d.name.lower().split('_part')[-1]))
 
   for d in dir_list:
-    with scandir(d) as it:
-      f_list = [entry for entry in it
-                if 'xyz' in entry.name.lower()
-                and entry.is_file()
-                and not entry.name.startswith('.') 
-                and entry.name.split('.')[-1] == 'csv']
-      if len(f_list) > 1:
-        print(f"ERROR: more than one file with extension .csv was found.")
-        print(f'Only one csv file required in folder {d.name}.')
-        exit(1)
+    # with scandir(d) as it:
+    p = Path(d).iterdir()
+    f_list = [entry for entry in p
+              if 'xyz' in entry.name.lower()
+              and entry.is_file()
+              and not entry.name.startswith('.') 
+              and entry.suffix == '.csv']
+    if len(f_list) > 1:
+      print(f"ERROR: more than one file with extension .csv was found.")
+      print(f'Only one csv file required in folder {d.name}.')
+      exit(1)
 
-      elif len(f_list) == 0:
-        print(f'No .csv file was found in {d.name}.')
+    elif len(f_list) == 0:
+      print(f'No .csv file was found in {d.name}.')
 
-      else:
-        f_list = [d] + f_list
-        file_list.append(f_list)
+    else:
+      file_list.append(f_list[0])
 
   return file_list
 
@@ -93,11 +94,11 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
   '''
 
   df = pd.read_csv(file_path, 
-                    delimiter=delimiter,
-                    skiprows=skip_rows,
-                    na_filter=False,
-                    encoding='latin1',
-                    header=None)
+                   delimiter=delimiter,
+                   skiprows=skip_rows,
+                   na_filter=False,
+                   encoding='latin1',
+                   header=None)
   
   # here begins madness of trying to deal with a poorly formatted csv
   row1 = df.iloc[0].tolist()
@@ -165,18 +166,20 @@ def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
   if verbose:
     start_time = timeit.default_timer()
 
+  input_dir = Path(input_dir)
+
   file_list = generate_file_list(input_dir)
   if verbose:
     print(f'Found data in {len(file_list)} folders to join.')
-    for folder in file_list:
-      print(f'  {folder[0].name}')
+    for f in file_list:
+      print(f'\t{f.parts[-2]}')
     print()
 
   export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
     print(f"Adjusted export filename to '{export_filename}'")
   
-  export_path = path.join(input_dir, export_filename)
+  export_path = input_dir / export_filename
 
   # Initialize an empty dataframe to hold combined data
   combined_df = pd.DataFrame()
@@ -192,7 +195,7 @@ def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
   # # Munsell Colour isn't a column we want, but it is sometimes accidentally exported
   # drop_columns = ['Munsell Colour']
 
-  for directory, file_name in file_list:
+  for file_name in file_list:
     xyz_df = open_and_clean_file(file_path=file_name,
                                        delimiter=',',
                                        skip_rows=skip_rows,
@@ -202,7 +205,7 @@ def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
       print(f"Found only {len(xyz_df.columns)} columns in '{file_name}'")
 
     if verbose:
-      print(f'Loaded {len(xyz_df)} rows from {file_name.name} in {directory.name}')
+      print(f'Loaded {len(xyz_df)} rows from {file_name.name} in {file_name.parts[-2]}')
     
     # This records column order for the first file, then adds 
     # successive columns at the end. The dataframe remains unordered, 
