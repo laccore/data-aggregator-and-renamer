@@ -1,8 +1,7 @@
 import timeit
-from os import scandir, path
-import re
 import argparse
 import pandas as pd
+from pathlib import Path
 
 
 def validate_export_filename(export_filename, excel):
@@ -66,20 +65,22 @@ def generate_file_list(input_dir, verbose=False):
 
   file_list = []
 
-  with scandir(input_dir) as it:
-    dir_list = [entry for entry in it 
-                if entry.is_dir()
-                and not entry.name.startswith('.')
-                and not '_xr' in entry.name.lower()]
-    dir_list = sorted(dir_list, key=lambda d: process_core_id(d.name))
+  p = Path(input_dir).iterdir()
+  
+  dir_list = [entry for entry in p
+              if entry.is_dir()
+              and not entry.name.startswith('.')
+              and not '_xr' in entry.name.lower()]
+  
+  dir_list = sorted(dir_list, key=lambda d: process_core_id(d.name))
 
   for d in dir_list:
-    with scandir(d) as it:
-      f_list = [entry for entry in it
-                if not entry.name.startswith('.') 
-                and entry.is_file()
-                and entry.name.split('.')[-1] == 'xlsx']
-
+    p = Path(d).iterdir()
+    f_list = [entry for entry in p
+              if not entry.name.startswith('.') 
+              and entry.is_file()
+              and entry.suffix == '.xlsx']
+  
     if len(f_list) != 1:
       print(f'ERROR: {len(f_list)} files with extension .xlsx were found.')
       print(f'Exactly one xslx file required in folder {d.name}.')
@@ -90,7 +91,7 @@ def generate_file_list(input_dir, verbose=False):
   if verbose:
     print(f'Found data in {len(file_list)} folders to aggregate:')
     for f in file_list:
-      print(f"  {f.path.split('/')[-2]}")
+      print(f"  {f.parts[-2]}")
     print()
 
   return file_list
@@ -99,6 +100,8 @@ def generate_file_list(input_dir, verbose=False):
 def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, verbose=False):
   if verbose:
     start_time = timeit.default_timer()
+  
+  input_dir = Path(input_dir)
 
   export_filename = validate_export_filename(out_filename, excel)
   if verbose and export_filename != out_filename:
@@ -117,7 +120,7 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
       print('Opening {}...'.format(xrf.name), end='\r')
     
     # load file, first two rows are junk data so start at row 3 (zero indexed)
-    df = pd.read_excel(xrf.path, header=2)
+    df = pd.read_excel(xrf, header=2)
 
     if verbose:
       print('Loaded {}    '.format(xrf.name))
@@ -142,7 +145,7 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
     print()
 
   if not sitehole:
-    export_path = path.join(input_dir, export_filename)
+    export_path = input_dir / export_filename
     print(f'Exporting data ({len(output)} rows) to {export_path}...', end='\r')
 
     if excel:
@@ -163,7 +166,7 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
 
     for hole in holes:
       filtered_export_filename = '.'.join(export_filename.split('.')[:-1]) + '-' + hole + '.' + export_filename.split('.')[-1]
-      export_path = path.join(input_dir, filtered_export_filename)
+      export_path = input_dir / filtered_export_filename
 
       filtered_data = output.loc[output['shfe'] == hole]
 
