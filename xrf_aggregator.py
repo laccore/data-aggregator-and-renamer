@@ -117,7 +117,7 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
       print('Opening {}...'.format(xrf.name), end='\r')
     
     # load file, first two rows are junk data so start at row 3 (zero indexed)
-    df = pd.read_excel(path.join(input_dir,xrf), header=2)
+    df = pd.read_excel(xrf.path, header=2, skip_blank_lines=True)
 
     if verbose:
       print('Loaded {}    '.format(xrf.name))
@@ -167,12 +167,17 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
 
       filtered_data = output.loc[output['shfe'] == hole]
 
-      print(f'Exporting data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}...', end='\r')
+      data_columns = [c for c in column_order if not all(filtered_data[c].isnull())]
+      if verbose:
+        print(f'Ignoring {len(column_order)-len(data_columns)} empty columns in SiteHole {hole}:')
+        print('\t',', '.join(sorted(list(set(column_order) - set(data_columns)))))
 
+      print(f'Exporting data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}...', end='\r')
+      
       if excel:
-        filtered_data[column_order].to_excel(export_path, index=False)
+        filtered_data[data_columns].to_excel(export_path, index=False)
       else:
-        filtered_data[column_order].to_csv(export_path, index=False)
+        filtered_data[data_columns].to_csv(export_path, index=False)
     
       print(f'Exported data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}    ')
 
