@@ -40,7 +40,7 @@ def generate_file_list(input_dir, verbose=False):
   Given the input directory, scan through all directories and collect 
   the paired files needed to aggregate data (out and raw).
   
-  Returns a nested list of pairs of DirEntry objects.
+  Returns a nested list of pairs of PurePath objects.
   '''
 
   file_list = []

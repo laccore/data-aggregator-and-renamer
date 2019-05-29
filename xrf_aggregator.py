@@ -56,8 +56,13 @@ def process_core_id(core_id):
 
 
 def generate_file_list(input_dir, verbose=False):
-  '''Rewrite after code rewrite
+  '''Comb through directories to generate list of files to combine.
+
+  Given the input directory, scan through all directories and collect 
+  the XRF Excel files, skipping directories and files that don't match
+  our specific file structure pattern.
   
+  Returns a list of PurePath objects.
   '''
 
   if verbose:
@@ -98,6 +103,9 @@ def generate_file_list(input_dir, verbose=False):
 
 
 def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, verbose=False):
+  ''' Aggregate cleaned data from different files and folders, export.
+
+  '''
   if verbose:
     start_time = timeit.default_timer()
   

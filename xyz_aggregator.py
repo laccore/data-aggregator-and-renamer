@@ -41,7 +41,7 @@ def generate_file_list(input_dir):
   Given the input directory, scan through all directories and collect 
   the xyz csv files.
   
-  Returns a list of nested DirEntry objects if [directory, file_name].
+  Returns a list of PurePath objects.
   '''
 
   file_list = []
