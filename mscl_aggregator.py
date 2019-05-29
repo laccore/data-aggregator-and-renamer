@@ -115,16 +115,22 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
   combined data.
   '''
 
-  units_file = 'mscl_units.txt'
-  headers_file = 'mscl_headers.txt'
+  # Format: machine header, readable header, units
+  headers_and_units =  [['SECT NUM','SectionID',''],
+                        ['SECT DEPTH','Section Depth','cm'],
+                        ['CT','Sediment Thickness','cm'],
+                        ['PWAmp','pWave Amplitude',''],
+                        ['PWVel','pWave Velocity','m/s'],
+                        ['Den1','Gamma Density','g/cm³'],
+                        ['MS1','MS Loop','SI x 10^-5'],
+                        ['Imp','Impedance',''],
+                        ['FP','Fractional Porosity',''],
+                        ['NGAM','Natural Gamma Radiation','CPS'],
+                        ['RES','Electrical Resistivity','Ohm-m'],
+                        ['Temp','Temperature in Logging Room','°C']]
 
-  with open(units_file, 'r+') as f:
-    headers_units = [r.split(',') for r in f.read().splitlines()]
-    units = {item[0]: item[1] for item in headers_units}
-
-  with open(headers_file, 'r+') as f:
-    readable_headers = [r.split(',') for r in f.read().splitlines()]
-    new_headers = {item[0]: item[1] for item in readable_headers}
+  new_headers = {item[0]: item[1] for item in headers_and_units}
+  units = {item[0]: item[2] for item in headers_and_units}
 
   # Remove unwanted column headers
   for dh in drop_headers:
