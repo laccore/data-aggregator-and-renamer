@@ -126,16 +126,27 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
   combined data.
   ''' 
 
-  units_file = 'xyz_units.txt'
-  headers_file = 'xyz_headers.txt'
+  # Format: machine header, readable header, units
+  headers_and_units =  [['Section','Section',''],
+                        ['Section Depth','Section Depth','cm'],
+                        ['Laser Profiler','Laser Profiler','mm'],
+                        ['Magnetic Susceptibility','Magnetic Susceptibility','SI'],
+                        ['Greyscale Reflectance','Greyscale Reflectance',''],
+                        ['CIE XYZ Colour Space','CIE X',''],
+                        ['Y','CIE Y',''],
+                        ['Z','CIE Z',''],
+                        ['CIE L*a*b* Colour Space','CIE L*',''],
+                        ['a*','CIE a*',''],
+                        ['b*','CIE b*',''],
+                        ['Reflectance (nm)','360','nm']]
 
-  with open(units_file, 'r+') as f:
-    headers_units = [r.split(',') for r in f.read().splitlines()]
-    units = {item[0]: item[1] for item in headers_units}
-
-  with open(headers_file, 'r+') as f:
-    readable_headers = [r.split(',') for r in f.read().splitlines()]
-    new_headers = {item[0]: item[1] for item in readable_headers}
+  new_headers = {item[0]: item[1] for item in headers_and_units}
+  units = {item[0]: item[2] for item in headers_and_units}
+  # headers and units for wavelengths 370 to 740 are the same, 
+  # so we add them programatically
+  for wavelength in range(370, 750, 10):
+    new_headers[str(wavelength)] = wavelength
+    units[str(wavelength)] = 'nm'
 
   # Remove unwanted column headers
   for dh in drop_headers:
