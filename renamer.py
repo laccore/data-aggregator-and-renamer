@@ -141,7 +141,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
   unmatched_filename = '.'.join(input_file.split('.')[:-1]) + '_unmatched.csv'
 
   ### Export matched data
-  with open(matched_filename, 'w', encoding='utf-8-sig') as f:
+  with open(matched_filename, 'w', encoding='utf-8-sig', newline='') as f:
     csvwriter = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     csvwriter.writerow(mscl_data[header_row][:-1])
     csvwriter.writerow(mscl_data[units_row][:-1])
@@ -150,7 +150,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
 
   ### Export unmatched data
   if len(unmatched_data) != 0:
-    with open(unmatched_filename, 'w', encoding='utf-8-sig') as f:
+    with open(unmatched_filename, 'w', encoding='utf-8-sig', newline='') as f:
       csvwriter = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
       csvwriter.writerow(mscl_data[header_row])
       csvwriter.writerow(mscl_data[units_row])
