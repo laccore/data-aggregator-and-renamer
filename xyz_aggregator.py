@@ -130,7 +130,7 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
   headers_and_units =  [['Section','Section',''],
                         ['Section Depth','Section Depth','cm'],
                         ['Laser Profiler','Laser Profiler','mm'],
-                        ['Magnetic Susceptibility','Magnetic Susceptibility','SI'],
+                        ['Magnetic Susceptibility','Magnetic Susceptibility','SI x 10^-5'],
                         ['Greyscale Reflectance','Greyscale Reflectance',''],
                         ['CIE XYZ Colour Space','CIE X',''],
                         ['Y','CIE Y',''],
