@@ -5,6 +5,7 @@ import pandas as pd
 import xlsxwriter
 import locale
 
+
 def validate_export_filename(export_filename, excel):
   '''Ensure export extension matches flag, return corrected filename.
 
