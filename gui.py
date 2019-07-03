@@ -114,7 +114,7 @@ def main():
     'corelist',
     widget='FileChooser',
     metavar='Core list file',
-    help='CSV in the format section #,coreID')
+    help='CSV in the format coreID,sectionNumber')
   options_renamer = renamer_parser.add_argument_group(
     'Optional Parameters',
     'The program will try to make sensible choices if these are left blank.',  

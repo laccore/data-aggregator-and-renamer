@@ -82,7 +82,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
   # Build the section list
   with open(core_list_filename, 'r', encoding='utf-8-sig') as f:
     rows = f.read().splitlines()
-    section_list = [[int(core_num), core_name] for core_num, core_name in [r.split(',') for r in rows]]
+    section_list = [[int(core_num), core_name] for core_name, core_num in [r.split(',') for r in rows]]
 
   # Add the filepart_section notation field to the section log
   num_sections = 1
