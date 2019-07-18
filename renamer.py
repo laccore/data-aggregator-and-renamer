@@ -37,7 +37,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
   mscl_data = []
   section_list = []
 
-  with open(input_file, 'r', encoding='utf-8-sig') as f:
+  with open(input_file, 'r', encoding='ISO-8859-1') as f:
     mscl_data = [r.strip().split(',') for r in f.read().splitlines()]
 
 
@@ -81,7 +81,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
 
 
   # Build the section list
-  with open(core_list_filename, 'r', encoding='utf-8-sig') as f:
+  with open(core_list_filename, 'r', encoding='ISO-8859-1') as f:
     rows = f.read().splitlines()
     section_list = [[int(core_num), core_name] for core_name, core_num in [r.split(',') for r in rows]]
 

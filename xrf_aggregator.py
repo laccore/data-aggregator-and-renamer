@@ -186,9 +186,9 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
       print(f'Exporting data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}...', end='\r')
       
       if excel:
-        filtered_data[data_columns].to_excel(export_path, index=False)
+        filtered_data[data_columns].to_excel(export_path, index=False, engine='xlsxwriter', options={'strings_to_numbers': True})
       else:
-        filtered_data[data_columns].to_csv(export_path, index=False)
+        filtered_data[data_columns].to_csv(export_path, index=False, float_format='%g', encoding='utf-8-sig')
     
       print(f'Exported data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}    ')
 
