@@ -18,8 +18,18 @@ import timeit
 import argparse
 import csv
 import locale
+import chardet
 
 version = '1.0.0'
+
+def guess_file_encoding(input_file, verbose=False):
+  with open(input_file, 'rb') as f:
+    rawdata = f.read()
+    enc = chardet.detect(rawdata)
+    if verbose:
+      print(f'Guess on encoding of {input_file}: {enc["encoding"]}')
+  return enc['encoding']
+
 
 
 def apply_names(input_file, core_list_filename, **kwargs):
@@ -37,7 +47,8 @@ def apply_names(input_file, core_list_filename, **kwargs):
   mscl_data = []
   section_list = []
 
-  with open(input_file, 'r', encoding='ISO-8859-1') as f:
+  enc = guess_file_encoding(input_file, verbose)
+  with open(input_file, 'r', encoding=enc) as f:
     mscl_data = [r.strip().split(',') for r in f.read().splitlines()]
 
 
@@ -81,7 +92,8 @@ def apply_names(input_file, core_list_filename, **kwargs):
 
 
   # Build the section list
-  with open(core_list_filename, 'r', encoding='ISO-8859-1') as f:
+  enc = guess_file_encoding(core_list_filename, verbose)
+  with open(core_list_filename, 'r', encoding=enc) as f:
     rows = f.read().splitlines()
     section_list = [[int(core_num), core_name] for core_name, core_num in [r.split(',') for r in rows]]
 
