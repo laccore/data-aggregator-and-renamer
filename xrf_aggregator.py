@@ -2,6 +2,7 @@ import timeit
 import argparse
 import pandas as pd
 from pathlib import Path
+import locale
 
 
 def validate_export_filename(export_filename, excel):
@@ -159,7 +160,7 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
     if excel:
       output[column_order].to_excel(export_path, index=False)
     else:
-      output[column_order].to_csv(export_path, index=False)
+      output[column_order].to_csv(export_path, index=False, float_format='%g', encoding=locale.getpreferredencoding())
     
     print(f'Exported data ({len(output)} rows) to {export_path}    ')
   
@@ -188,7 +189,7 @@ def aggregate_xrf_data(input_dir, out_filename, excel=False, sitehole=False, ver
       if excel:
         filtered_data[data_columns].to_excel(export_path, index=False, engine='xlsxwriter', options={'strings_to_numbers': True})
       else:
-        filtered_data[data_columns].to_csv(export_path, index=False, float_format='%g', encoding='utf-8-sig')
+        filtered_data[data_columns].to_csv(export_path, index=False, float_format='%g', encoding=locale.getpreferredencoding())
     
       print(f'Exported data from SiteHole {hole} ({len(filtered_data)} rows) to {filtered_export_filename}    ')
 
