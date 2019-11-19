@@ -149,7 +149,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
   elif 'unnamed' in input_file:
     matched_filename = input_file.replace('_unnamed','')
   else:
-    matched_filename = input_file.split('.')[0] + '_coreID.csv'
+    matched_filename = '.'.join(input_file.split('.')[:-1]) + '_coreID.csv'
   
   unmatched_filename = '.'.join(input_file.split('.')[:-1]) + '_unmatched.csv'
 
@@ -162,7 +162,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
       csvwriter.writerow(r)
 
   ### Export unmatched data
-  if len(unmatched_data) != 0:
+  if len(unmatched_data):
     with open(unmatched_filename, 'w', encoding=locale.getpreferredencoding(), newline='') as f:
       csvwriter = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
       csvwriter.writerow(mscl_data[header_row])
