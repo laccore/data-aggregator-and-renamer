@@ -21,16 +21,10 @@ def validate_export_filename(export_filename, excel):
 
   if excel:
     if extension not in ['xlsx', 'xls']:
-      if len(export_filename.split('.')) > 1:
-        export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.xlsx'
-      else:
-        export_filename += '.xlsx'
+      export_filename += '.xlsx'
   else:
     if extension != 'csv':
-      if len(export_filename.split('.')) > 1:
-        export_filename = '.'.join(export_filename.split('.')[0:-1]) + '.csv'
-      else:
-        export_filename += '.csv'
+      export_filename += '.csv'
 
   return export_filename
 
@@ -237,7 +231,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
     combined_df[column_order].to_excel(writer, sheet_name='Sheet5test', index=False)
     writer.save()
   else:
-    combined_df[column_order].to_csv(export_path, index=False, float_format='%g', encoding='utf-8-sig')
+    combined_df[column_order].to_csv(export_path, index=False, float_format='%g', encoding=locale.getpreferredencoding())
   print(f"Exported combined data to '{export_path}' ")
 
   if verbose:
