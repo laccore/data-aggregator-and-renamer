@@ -13,7 +13,7 @@ def validate_export_filename(export_filename, excel):
     valid Excel file extension (xsls, xls). This script assumes the flag 
     indicates user intention, and will append a correct extension.
 
-      If not using the Excel flag, this ensures the filename ends in .csv.
+    If not using the Excel flag, this ensures the filename ends in .csv.
 
     Returns the validated/fixed export filename.
     """
