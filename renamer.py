@@ -104,7 +104,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
     with open(core_list_filename, "r", encoding=enc) as f:
         rows = f.read().splitlines()
         section_list = [
-            [int(core_num), core_name]
+            [int(core_num.strip()), core_name.strip()]
             for core_name, core_num in [r.split(",") for r in rows]
         ]
 
