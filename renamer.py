@@ -105,7 +105,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
         rows = f.read().splitlines()
         section_list = [
             [int(core_num.strip()), core_name.strip()]
-            for core_name, core_num in [r.split(",") for r in rows]
+            for core_name, core_num, *_ in [r.split(",") for r in rows]
         ]
 
     # Add the filepart_section notation field to the section log
@@ -138,7 +138,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
             elif (
                 int(mscl_data[i][section_column])
                 == int(mscl_data[i - 1][section_column])
-            ) & (
+            ) and (
                 float(mscl_data[i][section_depth_column])
                 < float(mscl_data[i - 1][section_depth_column])
             ):
