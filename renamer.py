@@ -104,8 +104,8 @@ def apply_names(input_file, core_list_filename, **kwargs):
     with open(core_list_filename, "r", encoding=enc) as f:
         rows = f.read().splitlines()
         section_list = [
-            [int(core_num.strip()), core_name.strip()]
-            for core_name, core_num, *_ in [r.split(",") for r in rows]
+            [int(core_num), core_name]
+            for core_name, core_num, *_ in [map(str.strip, r.split(",")) for r in rows]
         ]
 
     # Add the filepart_section notation field to the section log
@@ -217,7 +217,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
     if count_diff > 0:
         print(f"\nWARNING: Not all cores in {core_list_filename} were used.")
         print(
-            f"The following {str(count_diff)} core {'names were' if count_diff != 1 else 'name was'} not used:"
+            f"The following {str(count_diff)} core{'IDs were' if count_diff != 1 else 'ID was'} not used:"
         )
         for v in sorted(list(set(sectionDict.values()))):
             if v not in named_set:
