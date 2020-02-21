@@ -208,7 +208,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
             print(f"  {raw.name}\t({len(raw_df)} rows)")
             print()
 
-        # Add 'Temp' column from .raw file to .out file dataframe
+        # Add "Temp" column from .raw file to .out file dataframe
         out_df["Temp"] = raw_df["Temp"]
 
         # This records column order for the first file, then adds
@@ -222,7 +222,7 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
                 c for c in out_df.columns.values.tolist() if c not in column_order
             ]
             if new_columns:
-                # Preserve column order, and add new columns before last ('Temp') column
+                # Preserve column order, and add new columns before last ("Temp") column
                 column_order[-1:-1] = new_columns
                 if verbose:
                     print(
@@ -237,9 +237,9 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
         print(f"All data combined ({len(combined_df)} rows).")
 
     # Drop unused headers, add units, and make headers human readable
-    # 'SB DEPTH' is dropped because it is not relevant and often confusing.
+    # "SB DEPTH" is dropped because it is not relevant and often confusing.
     combined_df, column_order = clean_headers_add_units(
-        combined_df, column_order, ["SB DEPTH"]
+        dataframe=combined_df, column_order=column_order, drop_headers=["SB DEPTH"]
     )
 
     # Export data
