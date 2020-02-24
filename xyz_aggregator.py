@@ -184,9 +184,11 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
 
 
 def filter_invalid_values(dataframe, filters):
-    # Filter invalid values (often machine error) from the dataset
-    # filters format: [column title, operator, value]
-    # e.g., ["MS", "<", -50] will remove all values in the MS column less than -50
+    """Filter invalid values (often machine error) from the dataset
+    
+    filters format: [column title, operator, value]
+    e.g., ["MS", "<", -50] will remove all values in the MS column less than -50
+    """
 
     ops = {
         ">": operator.gt,
