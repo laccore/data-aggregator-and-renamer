@@ -6,7 +6,7 @@ import xrf_aggregator as xrf
 import renamer
 
 
-@Gooey(program_name="Data Aggregator", navigation="TABBED", default_size=(600, 680))
+@Gooey(program_name="Data Aggregator ", navigation="TABBED", default_size=(600, 680))
 def main():
     parser = GooeyParser(
         description="Aggregate data from Geotek and Itrax machine outputs."
@@ -33,14 +33,14 @@ def main():
     options_mst.add_argument(
         "-e",
         "--excel",
-        metavar="Export as Excel",
+        metavar="Export as Excel ",
         action="store_true",
         help="Export combined data as an Excel (xlsx) file.",
     )
     options_mst.add_argument(
         "-v",
         "--verbose",
-        metavar="Verbose",
+        metavar="Verbose ",
         action="store_true",
         help="Display troubleshooting info.",
     )
@@ -62,16 +62,23 @@ def main():
     )
     options_xyz = xyz_parser.add_argument_group("Options", gooey_options={"columns": 1})
     options_xyz.add_argument(
+        "-f",
+        "--filter",
+        metavar="Filter bad MS values",
+        action="store_true",
+        help="Filter magnetic susceptibility values < -50 (machine error) ",
+    )
+    options_xyz.add_argument(
         "-e",
         "--excel",
-        metavar="Export as Excel",
+        metavar="Export as Excel ",
         action="store_true",
         help="Export combined data as an Excel (xlsx) file.",
     )
     options_xyz.add_argument(
         "-v",
         "--verbose",
-        metavar="Verbose",
+        metavar="Verbose ",
         action="store_true",
         help="Display troubleshooting info.",
     )
@@ -95,21 +102,21 @@ def main():
     options_xrf.add_argument(
         "-s",
         "--sitehole",
-        metavar="Export by SiteHole",
+        metavar="Export by SiteHole ",
         action="store_true",
         help="Split aggregated data by SiteHole and export each file individually.",
     )
     options_xrf.add_argument(
         "-e",
         "--excel",
-        metavar="Export as Excel",
+        metavar="Export as Excel ",
         action="store_true",
         help="Export combined data as an Excel (xlsx) file.",
     )
     options_xrf.add_argument(
         "-v",
         "--verbose",
-        metavar="Verbose",
+        metavar="Verbose ",
         action="store_true",
         help="Display troubleshooting info.",
     )
@@ -133,7 +140,7 @@ def main():
         help="CSV in the format coreID,sectionNumber",
     )
     options_renamer = renamer_parser.add_argument_group(
-        "Optional Parameters",
+        "Optional Parameters ",
         "The program will try to make sensible choices if these are left blank.",
         gooey_options={"columns": 2},
     )
@@ -147,7 +154,7 @@ def main():
     options_renamer.add_argument(
         "-v",
         "--verbose",
-        metavar="Verbose",
+        metavar="Verbose ",
         action="store_true",
         help="Print troubleshooting information.",
     )
@@ -176,9 +183,11 @@ def main():
             verbose=args.verbose,
         )
     elif args.command == "MSCL-XYZ":
+        print(args)
         xyz.aggregate_xyz_data(
             input_dir=args.input_directory,
             out_filename=args.output_filename,
+            filter=args.filter,
             excel=args.excel,
             verbose=args.verbose,
         )

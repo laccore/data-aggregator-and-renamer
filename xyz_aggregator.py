@@ -208,10 +208,13 @@ def filter_invalid_values(dataframe, filters):
     return dataframe
 
 
-def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
+def aggregate_xyz_data(
+    input_dir, out_filename, filter=False, excel=False, verbose=False
+):
     """ Aggregate cleaned data from different files and folders, export.
 
     """
+
     if verbose:
         start_time = timeit.default_timer()
 
@@ -281,11 +284,15 @@ def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
     if verbose:
         print(f"All data combined ({len(combined_df)} rows).")
 
-    # Remove invalid values
-    filters = [
-        ["Magnetic Susceptibility", "<", -50],
-    ]
-    combined_df = filter_invalid_values(combined_df, filters)
+    if filter:
+        # Remove invalid values
+        filters = [
+            ["Magnetic Susceptibility", "<", -50],
+        ]
+        combined_df = filter_invalid_values(combined_df, filters)
+
+        if verbose:
+            print("Filtered invalid magnetic susceptibility values.")
 
     # Drop unused columns, add units, and make headers human readable
     drop_columns = ["Depth", "Core Depth", "Munsell Colour", "Time Stamp"]
@@ -324,6 +331,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("output_filename", type=str, help="Name of the output file.")
     parser.add_argument(
+        "-f",
+        "--filter",
+        action="store_true",
+        help="Filter magnetic susceptibility values < -50 (machine error).",
+    )
+    parser.add_argument(
         "-e",
         "--excel",
         action="store_true",
@@ -337,5 +350,10 @@ if __name__ == "__main__":
 
     # join_xyz_data(args.input_directory, args.output_filename, args.verbose)
     aggregate_xyz_data(
-        args.input_directory, args.output_filename, args.excel, args.verbose
+        args.input_directory,
+        args.output_filename,
+        args.filter,
+        args.excel,
+        args.verbose,
     )
+
