@@ -4,6 +4,7 @@ import argparse
 import pandas as pd
 import xlsxwriter
 import locale
+import operator
 
 
 def validate_export_filename(export_filename, excel):
@@ -182,6 +183,29 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
     return dataframe, column_order
 
 
+def filter_invalid_values(dataframe, filters):
+    # Filter invalid values (often machine error) from the dataset
+    # filters format: [column title, operator, value]
+    # e.g., ["MS", "<", -50] will remove all values in the MS column less than -50
+
+    ops = {
+        ">": operator.gt,
+        "<": operator.lt,
+        ">=": operator.ge,
+        "<=": operator.le,
+        "=": operator.eq,
+    }
+
+    for col_name, op, val in filters:
+        dataframe = dataframe.astype({col_name: "float64"})
+
+        dataframe[col_name] = dataframe[col_name].mask(
+            ops[op](dataframe[col_name], val)
+        )
+
+    return dataframe
+
+
 def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
     """ Aggregate cleaned data from different files and folders, export.
 
@@ -254,6 +278,12 @@ def aggregate_xyz_data(input_dir, out_filename, excel=False, verbose=False):
 
     if verbose:
         print(f"All data combined ({len(combined_df)} rows).")
+
+    # Remove invalid values
+    filters = [
+        ["Magnetic Susceptibility", "<", -50],
+    ]
+    combined_df = filter_invalid_values(combined_df, filters)
 
     # Drop unused columns, add units, and make headers human readable
     drop_columns = ["Depth", "Core Depth", "Munsell Colour", "Time Stamp"]
