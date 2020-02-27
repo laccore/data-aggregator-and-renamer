@@ -1,4 +1,4 @@
-# CSDCO Geotek Data Aggregator and Renamer
+# CSDCO Data Aggregator and Renamer
 
 ![icon]
 
