@@ -6,10 +6,14 @@ import xrf_aggregator as xrf
 import renamer
 
 
-@Gooey(program_name="Data Aggregator ", navigation="TABBED", default_size=(600, 680))
+@Gooey(
+    program_name="Data Aggregator and Renamer ",
+    navigation="TABBED",
+    default_size=(600, 680),
+)
 def main():
     parser = GooeyParser(
-        description="Aggregate data from Geotek and Itrax machine outputs."
+        description="Aggregate and assign CoreID names to data from Geotek and Itrax machines."
     )
 
     subs = parser.add_subparsers(help="commands", dest="command")
