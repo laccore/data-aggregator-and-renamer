@@ -2,7 +2,9 @@
 
 ![icon]
 
-This project aggregates data from machine outputs of different scientific machines used at the [Continental Scientific Drilling Coordination Office (CSDCO)](https://csdco.umn.edu). It will also apply core names/IDs to aggregated data, if [supplied a file to translate](#core-list-file).
+This project aggregates data from machine outputs of different scientific machines used at the [Continental Scientific Drilling Coordination Office (CSDCO)](https://csdco.umn.edu).
+
+This tool will also [apply core names/IDs](#rename) to aggregated data.
 
 The tool currently supports machine outputs from several instruments.
 
