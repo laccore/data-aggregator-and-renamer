@@ -24,5 +24,5 @@ How to use a core list file to rename aggregated data.
 
 ![s1]
 
-[icon]: docs/aggregator_icon.gif "Icon for the Data Aggregator and Renamer"
+[icon]: docs/aggregator_icon.png "Icon for the Data Aggregator and Renamer"
 [s1]: docs/screenshots/1-mscl_s.png "Screenshot of the CSDCO Collection Generator"
