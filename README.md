@@ -18,7 +18,7 @@ This tool is written in Python, and uses [Gooey](https://github.com/chriskiehl/G
 
 ### Example Data
 
-Example data is included in the `demo_data` folder of the repository. The demo data is also available as an [easy to download zip file](https://github.com/laccore/data-aggregator-and-renamer/blob/master/demo_data/demo_data.zip).
+Example data is included in the `demo_data` folder of the repository. The demo data is also available as an [easy to download zip file](demo_data/demo_data.zip).
 
 This folder contains example data of MSCL-S and MSCL-XYZ sessions, as well as two core list files that should help show how the tool works and the structure needed for running the aggregator and renaming tools.
 
