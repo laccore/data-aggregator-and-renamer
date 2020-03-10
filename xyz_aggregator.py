@@ -19,20 +19,12 @@ def validate_export_filename(export_filename, excel):
     Returns the validated/fixed export filename.
     """
 
-    extension = export_filename.split(".")[-1]
-
     if excel:
-        if extension not in ["xlsx", "xls"]:
-            if len(export_filename.split(".")) > 1:
-                export_filename = ".".join(export_filename.split(".")[0:-1]) + ".xlsx"
-            else:
-                export_filename += ".xlsx"
+        if export_filename.suffix not in [".xlsx", ".xls"]:
+            return export_filename.with_suffix(".xlsx")
     else:
-        if extension != "csv":
-            if len(export_filename.split(".")) > 1:
-                export_filename = ".".join(export_filename.split(".")[0:-1]) + ".csv"
-            else:
-                export_filename += ".csv"
+        if export_filename.suffix != ".csv":
+            return export_filename.with_suffix(".csv")
 
     return export_filename
 
@@ -227,6 +219,7 @@ def aggregate_xyz_data(
             print(f"\t{f.parts[-2]}")
         print()
 
+    out_filename = Path(out_filename)
     export_filename = validate_export_filename(out_filename, excel)
     if verbose and export_filename != out_filename:
         print(f"Adjusted export filename to '{export_filename}'")
