@@ -191,7 +191,9 @@ def filter_invalid_values(dataframe, filters):
     }
 
     for col_name, op, val in filters:
-        dataframe = dataframe.astype({col_name: "float64"})
+        # dataframe = dataframe.astype({col_name: "float64"})
+        dataframe[col_name] = pd.to_numeric(dataframe[col_name], errors="coerce")
+        dataframe[col_name] = dataframe[col_name].astype("float64")
 
         dataframe[col_name] = dataframe[col_name].mask(
             ops[op](dataframe[col_name], val)
