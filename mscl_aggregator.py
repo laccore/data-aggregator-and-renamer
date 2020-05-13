@@ -43,7 +43,7 @@ def generate_file_list(input_dir, verbose=False):
     dir_list = [
         entry
         for entry in p
-        if "mscl" in entry.name.lower()
+        # if "mscl" in entry.name.lower()
         and "_part" in entry.name.lower()
         and entry.is_dir()
         and not entry.name.startswith(".")

@@ -44,7 +44,7 @@ def generate_file_list(input_dir):
     dir_list = [
         entry
         for entry in p
-        if "xyz" in entry.name.lower()
+        # if "xyz" in entry.name.lower()
         and "_part" in entry.name.lower()
         and entry.is_dir()
         and not entry.name.startswith(".")
