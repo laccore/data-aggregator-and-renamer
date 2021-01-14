@@ -9,14 +9,14 @@ import locale
 def validate_export_filename(export_filename, excel):
     """Ensure export extension matches flag, return corrected filename.
 
-  xlswriter won't export an Excel file unless the file extension is a 
-  valid Excel file extension (xsls, xls). This script assumes the flag 
-  indicates user intention, and will append a correct extension.
+    xlswriter won't export an Excel file unless the file extension is a
+    valid Excel file extension (xsls, xls). This script assumes the flag
+    indicates user intention, and will append a correct extension.
 
-  If not using the Excel flag, this ensures the filename ends in .csv.
+    If not using the Excel flag, this ensures the filename ends in .csv.
 
-  Returns the validated/fixed export filename.
-  """
+    Returns the validated/fixed export filename.
+    """
 
     if excel:
         if export_filename.suffix not in [".xlsx", ".xls"]:
@@ -31,11 +31,11 @@ def validate_export_filename(export_filename, excel):
 def generate_file_list(input_dir, verbose=False):
     """Comb through directories to generate list of files to combine.
 
-  Given the input directory, scan through all directories and collect 
-  the paired files needed to aggregate data (out and raw).
-  
-  Returns a nested list of pairs of PurePath objects.
-  """
+    Given the input directory, scan through all directories and collect
+    the paired files needed to aggregate data (out and raw).
+
+    Returns a nested list of pairs of PurePath objects.
+    """
 
     file_list = []
 
@@ -84,17 +84,17 @@ def generate_file_list(input_dir, verbose=False):
 def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     """Open file in pandas, perform some file cleanup, return a dataframe
 
-  Opens the text files output from the Geotek equipment software 
-  with a number of flags, then drops the first row of 'data' which is 
-  just the units field.
+    Opens the text files output from the Geotek equipment software
+    with a number of flags, then drops the first row of 'data' which is
+    just the units field.
 
-  Rows are dropped, whitespace is stripped from headers, and the index
-  is reset so data aligns later on.
+    Rows are dropped, whitespace is stripped from headers, and the index
+    is reset so data aligns later on.
 
-  Notes on files:
-  - tell pandas to treat empty fields as empty strings, not NaNs
-  - the 'latin1' encoding flag is needed to open the .raw files
-  """
+    Notes on files:
+    - tell pandas to treat empty fields as empty strings, not NaNs
+    - the 'latin1' encoding flag is needed to open the .raw files
+    """
 
     df = pd.read_csv(
         file_path,
@@ -111,13 +111,13 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
 
 
 def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
-    """ Drop unwanted headers and add units row to data.
+    """Drop unwanted headers and add units row to data.
 
-  Any new columns will need to have a units row added to the list 
-  below, which is converted into a dict which is converted into 
-  a pandas dataframe which is then concatenated to the front of the 
-  combined data.
-  """
+    Any new columns will need to have a units row added to the list
+    below, which is converted into a dict which is converted into
+    a pandas dataframe which is then concatenated to the front of the
+    combined data.
+    """
 
     # Format: machine header, readable header, units
     headers_and_units = [
@@ -163,9 +163,7 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
 
 
 def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
-    """ Aggregate cleaned data from different files and folders, export.
-
-  """
+    """Aggregate cleaned data from different files and folders, export."""
     if verbose:
         start_time = timeit.default_timer()
 

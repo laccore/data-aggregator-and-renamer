@@ -8,14 +8,14 @@ import locale
 def validate_export_filename(export_filename, excel):
     """Ensure export extension matches flag, return corrected filename.
 
-  xlswriter won't export an Excel file unless the file extension is a 
-  valid Excel file extension (xsls, xls). This script assumes the flag 
-  indicates user intention, and will append a correct extension.
+    xlswriter won't export an Excel file unless the file extension is a
+    valid Excel file extension (xsls, xls). This script assumes the flag
+    indicates user intention, and will append a correct extension.
 
-  If not using the Excel flag, this ensures the filename ends in .csv.
+    If not using the Excel flag, this ensures the filename ends in .csv.
 
-  Returns the validated/fixed export filename.
-  """
+    Returns the validated/fixed export filename.
+    """
 
     if excel:
         if export_filename.suffix not in [".xlsx", ".xls"]:
@@ -28,14 +28,14 @@ def validate_export_filename(export_filename, excel):
 
 
 def process_core_id(core_id):
-    """ This function splits all parts of a LacCore CoreID, casts the numeric 
-  portions as ints (so sorting works properly), and returns a tuple with all 
-  sortable parts separated. Used for sorting a directory list. 
+    """This function splits all parts of a LacCore CoreID, casts the numeric
+    portions as ints (so sorting works properly), and returns a tuple with all
+    sortable parts separated. Used for sorting a directory list.
 
-  LacCore Core IDs are in the format 
-  PROJECT-[LAKENAME][2DIGITYEAR]-[SITE][HOLE]-[CORE][TOOL]-SECTION
-  e.g. PROJ-LAK19-1A-1L-1
-  """
+    LacCore Core IDs are in the format
+    PROJECT-[LAKENAME][2DIGITYEAR]-[SITE][HOLE]-[CORE][TOOL]-SECTION
+    e.g. PROJ-LAK19-1A-1L-1
+    """
     parts = core_id.split(" ")[0].split("-")
 
     return (
@@ -51,12 +51,12 @@ def process_core_id(core_id):
 def generate_file_list(input_dir, verbose=False):
     """Comb through directories to generate list of files to combine.
 
-  Given the input directory, scan through all directories and collect 
-  the XRF Excel files, skipping directories and files that don't match
-  our specific file structure pattern.
-  
-  Returns a list of PurePath objects.
-  """
+    Given the input directory, scan through all directories and collect
+    the XRF Excel files, skipping directories and files that don't match
+    our specific file structure pattern.
+
+    Returns a list of PurePath objects.
+    """
 
     if verbose:
         print(f"Scanning subfolders of {input_dir} for .xslx files.")
@@ -104,9 +104,7 @@ def generate_file_list(input_dir, verbose=False):
 def aggregate_xrf_data(
     input_dir, out_filename, excel=False, sitehole=False, verbose=False
 ):
-    """ Aggregate cleaned data from different files and folders, export.
-
-  """
+    """Aggregate cleaned data from different files and folders, export."""
     if verbose:
         start_time = timeit.default_timer()
 

@@ -10,8 +10,8 @@ import operator
 def validate_export_filename(export_filename, excel):
     """Ensure export extension matches flag, return corrected filename.
 
-    xlswriter won't export an Excel file unless the file extension is a 
-    valid Excel file extension (xsls, xls). This script assumes the flag 
+    xlswriter won't export an Excel file unless the file extension is a
+    valid Excel file extension (xsls, xls). This script assumes the flag
     indicates user intention, and will append a correct extension.
 
     If not using the Excel flag, this ensures the filename ends in .csv.
@@ -32,7 +32,7 @@ def validate_export_filename(export_filename, excel):
 def generate_file_list(input_dir):
     """Comb through directories to generate list of files to combine.
 
-    Given the input directory, scan through all directories and collect 
+    Given the input directory, scan through all directories and collect
     the xyz csv files.
 
     Returns a list of PurePath objects.
@@ -80,8 +80,8 @@ def generate_file_list(input_dir):
 def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     """Open file in pandas, perform some file cleanup, return a dataframe
 
-    Opens the text files output from the Geotek equipment software 
-    with a number of flags, then drops the first row of 'data' which is 
+    Opens the text files output from the Geotek equipment software
+    with a number of flags, then drops the first row of 'data' which is
     just the units field.
 
     Rows are dropped, whitespace is stripped from headers, and the index
@@ -120,11 +120,11 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
 
 
 def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
-    """ Drop unwanted headers and add units row to data.
+    """Drop unwanted headers and add units row to data.
 
-    Any new columns will need to have a units row added to the list 
-    below, which is converted into a dict which is converted into 
-    a pandas dataframe which is then concatenated to the front of the 
+    Any new columns will need to have a units row added to the list
+    below, which is converted into a dict which is converted into
+    a pandas dataframe which is then concatenated to the front of the
     combined data.
     """
 
@@ -178,7 +178,7 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
 
 def filter_invalid_values(dataframe, filters):
     """Filter invalid values (often machine error) from the dataset
-    
+
     filters format: [column title, operator, value]
     e.g., ["MS", "<", -50] will remove all values in the MS column less than -50
     """
@@ -206,9 +206,7 @@ def filter_invalid_values(dataframe, filters):
 def aggregate_xyz_data(
     input_dir, out_filename, filter=False, excel=False, verbose=False
 ):
-    """ Aggregate cleaned data from different files and folders, export.
-
-    """
+    """Aggregate cleaned data from different files and folders, export."""
 
     if verbose:
         start_time = timeit.default_timer()
