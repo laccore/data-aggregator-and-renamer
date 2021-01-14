@@ -58,10 +58,10 @@ def generate_file_list(input_dir):
         f_list = [
             entry
             for entry in p
-            if "xyz" in entry.name.lower()
+            if ("xyz" in entry.name.lower() or "hrms" in entry.name.lower())
             and entry.is_file()
             and not entry.name.startswith(".")
-            and entry.suffix == ".csv"
+            and entry.suffix.lower() == ".csv"
         ]
         if len(f_list) > 1:
             print(f"ERROR: more than one file with extension .csv was found.")
@@ -106,6 +106,7 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     row2 = df.iloc[1].tolist()
     headers = []
     for pos, header in enumerate(row1):
+        print(header)
         if header.strip():
             headers.append(header)
         else:
@@ -351,4 +352,3 @@ if __name__ == "__main__":
         args.excel,
         args.verbose,
     )
-
