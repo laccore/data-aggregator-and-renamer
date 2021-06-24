@@ -102,7 +102,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
     # Build the section list
     enc = guess_file_encoding(core_list_filename, verbose)
     with open(core_list_filename, "r", encoding=enc) as f:
-        rows = f.read().splitlines()
+        rows = [row for row in f.read().splitlines() if row != ","]
         section_list = [
             [int(core_num), core_name]
             for core_name, core_num, *_ in [map(str.strip, r.split(",")) for r in rows]
