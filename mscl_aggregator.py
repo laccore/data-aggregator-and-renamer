@@ -1,9 +1,10 @@
-import timeit
 import argparse
+import locale
+import timeit
+from pathlib import Path
+
 import pandas as pd
 import xlsxwriter
-from pathlib import Path
-import locale
 
 
 def validate_export_filename(export_filename, excel):

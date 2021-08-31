@@ -12,12 +12,11 @@ Examples:
 Incorrect command line usage will print an explanation.
 """
 
-import sys
-import os.path
-import timeit
 import argparse
 import csv
 import locale
+import timeit
+
 import chardet
 
 version = "1.0.0"
@@ -153,6 +152,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
     ### Build the export lists
     matched_data = []
     unmatched_data = []
+    unmatched_identifiers = set()
 
     # Build the export lists, replacing the geotek file section number with the
     # coreID and removing the extra part_section column if the row was matched.
@@ -162,6 +162,7 @@ def apply_names(input_file, core_list_filename, **kwargs):
             matched_data.append(row[:-1])
         else:
             unmatched_data.append(row)
+            unmatched_identifiers.add(row[-1])
 
     # Build export names
     if "output_filename" in kwargs and kwargs["output_filename"]:
@@ -197,6 +198,11 @@ def apply_names(input_file, core_list_filename, **kwargs):
             csvwriter.writerow(mscl_data[units_row])
             for r in unmatched_data:
                 csvwriter.writerow(r)
+        
+        print(f"There was data for {len(unmatched_identifiers)} unmatched cores:")
+        unmatched_identifiers = sorted(list(unmatched_identifiers))
+        for unmid in unmatched_identifiers:
+            print(f"\t{unmid}")
 
     ### Reporting stuff
     # Create a set to check unique cores names
