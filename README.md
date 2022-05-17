@@ -1,8 +1,8 @@
-# CSDCO Data Aggregator and Renamer
+# CSD Data Aggregator and Renamer
 
 ![icon]
 
-This project aggregates data from machine outputs of different scientific machines used at the [Continental Scientific Drilling Coordination Office (CSDCO)](https://csdco.umn.edu).
+This project aggregates data from machine outputs of different scientific machines used at the [Continental Scientific Drilling Facility (CSD)](https://cse.umn.edu/csd).
 
 This tool will also [apply core names/IDs](#rename) to aggregated data.
 
@@ -77,4 +77,4 @@ EXPD-SPR20-1B-7L-1,5
 
 ## Questions and Requests
 
-Any questions or requests can be directed to [Alex](https://csdco.umn.edu/staff/alex-stone) or the [CSDCO](https://csdco.umn.edu/forms/contact-csdco) in general.
+Any questions or requests can be directed to [Alex](https://cse.umn.edu/csd/our-team) or the CSD Facility Director.
