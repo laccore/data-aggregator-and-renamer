@@ -106,6 +106,7 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     )
     df = df.rename(str.strip, axis="columns")
     df = df.drop(drop_rows)
+    df = df[~df.eq("").all(1)]
     df = df.reset_index(drop=True)
 
     return df
@@ -193,6 +194,10 @@ def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
     skip_rows = [0]  # skip first row of mscl output files
 
     for out, raw in file_list:
+        if verbose:
+            print(f"Loading files from {out.parts[-2]}...")
+            print()
+
         out_df = open_and_clean_file(
             file_path=out, delimiter="\t", skip_rows=skip_rows, drop_rows=[0]
         )
