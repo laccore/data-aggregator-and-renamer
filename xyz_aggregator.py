@@ -46,13 +46,13 @@ def generate_file_list(input_dir):
         entry
         for entry in p
         if "xyz" in entry.name.lower()
-        and "_part" in entry.name.lower()
+        and "-p" in entry.name.lower()
         and entry.is_dir()
         and not entry.name.startswith(".")
     ]
     # Sort folders by the "_part##" token, which is most consistently correct
     # converting the number to float because there have been times where #.5 has been used
-    dir_list = sorted(dir_list, key=lambda d: float(d.name.lower().split("_part")[-1]))
+    dir_list = sorted(dir_list, key=lambda d: float(d.name.lower().split("-p")[-1]))
 
     for d in dir_list:
         p = Path(d).iterdir()
@@ -107,7 +107,6 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     row2 = df.iloc[1].tolist()
     headers = []
     for pos, header in enumerate(row1):
-        print(header)
         if header.strip():
             headers.append(header)
         else:
@@ -237,7 +236,7 @@ def aggregate_xyz_data(
     # Start combining data
     # First two rows are skipped, they are file metadata we don't care about
     # Unit row (row 0) is dropped and added later
-    skip_rows = [0, 1]  # skip first two rows, junk data
+    skip_rows = 3  # skip first n rows, unrelated metadata
 
     # Munsell Colour isn't a column we want, but it is sometimes accidentally exported
     # drop_columns = ['Munsell Colour']
@@ -247,7 +246,7 @@ def aggregate_xyz_data(
             file_path=file_name, delimiter=",", skip_rows=skip_rows, drop_rows=[0, 1]
         )
 
-        if verbose and len(xyz_df.columns) < 52:
+        if verbose and len(xyz_df.columns) < 43:
             print(f"Found only {len(xyz_df.columns)} columns in '{file_name}'")
 
         if verbose:
