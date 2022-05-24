@@ -30,7 +30,7 @@ def validate_export_filename(export_filename, excel):
     return export_filename
 
 
-def generate_file_list(input_dir):
+def generate_file_list(input_dir, separator):
     """Comb through directories to generate list of files to combine.
 
     Given the input directory, scan through all directories and collect
@@ -46,13 +46,15 @@ def generate_file_list(input_dir):
         entry
         for entry in p
         if "xyz" in entry.name.lower()
-        and "-p" in entry.name.lower()
+        and separator in entry.name.lower()
         and entry.is_dir()
         and not entry.name.startswith(".")
     ]
     # Sort folders by the "_part##" token, which is most consistently correct
     # converting the number to float because there have been times where #.5 has been used
-    dir_list = sorted(dir_list, key=lambda d: float(d.name.lower().split("-p")[-1]))
+    dir_list = sorted(
+        dir_list, key=lambda d: float(d.name.lower().split(separator)[-1])
+    )
 
     for d in dir_list:
         p = Path(d).iterdir()
@@ -161,8 +163,10 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
     for header in column_order:
         if header not in units:
             print(f"WARNING: no associated units for header '{header}'.")
+            units[header] = ""
         if header not in new_headers:
             print(f"WARNING: no associated readable header for header '{header}'.")
+            new_headers[header] = header
 
     # Add units row
     dataframe = pd.concat(
@@ -204,7 +208,7 @@ def filter_invalid_values(dataframe, filters):
 
 
 def aggregate_xyz_data(
-    input_dir, out_filename, filter=False, excel=False, verbose=False
+    input_dir, out_filename, filter=False, separator="-p", excel=False, verbose=False
 ):
     """Aggregate cleaned data from different files and folders, export."""
 
@@ -213,7 +217,7 @@ def aggregate_xyz_data(
 
     input_dir = Path(input_dir)
 
-    file_list = generate_file_list(input_dir)
+    file_list = generate_file_list(input_dir, separator)
     if verbose:
         print(f"Found data in {len(file_list)} folders to join.")
         for f in file_list:
@@ -331,6 +335,9 @@ if __name__ == "__main__":
         help="Filter magnetic susceptibility values < -50 (machine error).",
     )
     parser.add_argument(
+        "-s", "--separator", type=str, help="Define file part separator"
+    )
+    parser.add_argument(
         "-e",
         "--excel",
         action="store_true",
@@ -342,11 +349,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # join_xyz_data(args.input_directory, args.output_filename, args.verbose)
+    separator = args.separator if args.separator else "-p"
+
     aggregate_xyz_data(
         args.input_directory,
         args.output_filename,
         args.filter,
+        separator,
         args.excel,
         args.verbose,
     )
