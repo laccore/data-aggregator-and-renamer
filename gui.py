@@ -1,9 +1,9 @@
-import timeit
 from gooey import Gooey, GooeyParser
+
 import mscl_aggregator as mst
-import xyz_aggregator as xyz
-import xrf_aggregator as xrf
 import renamer
+import xrf_aggregator as xrf
+import xyz_aggregator as xyz
 
 
 @Gooey(
