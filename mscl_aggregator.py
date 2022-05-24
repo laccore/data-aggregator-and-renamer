@@ -29,7 +29,7 @@ def validate_export_filename(export_filename, excel):
     return export_filename
 
 
-def generate_file_list(input_dir, verbose=False):
+def generate_file_list(input_dir, separator, verbose=False):
     """Comb through directories to generate list of files to combine.
 
     Given the input directory, scan through all directories and collect
@@ -45,13 +45,13 @@ def generate_file_list(input_dir, verbose=False):
         entry
         for entry in p
         if "mscl" in entry.name.lower()
-        and "_part" in entry.name.lower()
+        and separator in entry.name.lower()
         and entry.is_dir()
         and not entry.name.startswith(".")
     ]
     # Sort folders by the "_part##" token, which is most consistently correct
     # converting the number to float because there have been times where #.5 has been used
-    dir_list = sorted(dir_list, key=lambda d: float(d.name.split("_part")[-1]))
+    dir_list = sorted(dir_list, key=lambda d: float(d.name.split(separator)[-1]))
 
     for d in dir_list:
         p = Path(d).iterdir()
@@ -149,8 +149,10 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
     for header in column_order:
         if header not in units:
             print(f"WARNING: no associated units for header '{header}'.")
+            units[header] = ""
         if header not in new_headers:
             print(f"WARNING: no associated readable header for header '{header}'.")
+            new_headers[header] = header
 
     # Add units row
     dataframe = pd.concat(
@@ -164,14 +166,16 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
     return dataframe, column_order
 
 
-def aggregate_mscl_data(input_dir, out_filename, excel=False, verbose=False):
+def aggregate_mscl_data(
+    input_dir, out_filename, separator="-p", excel=False, verbose=False
+):
     """Aggregate cleaned data from different files and folders, export."""
     if verbose:
         start_time = timeit.default_timer()
 
     input_dir = Path(input_dir)
 
-    file_list = generate_file_list(input_dir, verbose)
+    file_list = generate_file_list(input_dir, separator, verbose)
 
     out_filename = Path(out_filename)
     export_filename = validate_export_filename(out_filename, excel)
@@ -278,6 +282,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("output_filename", type=str, help="Name of the output file.")
     parser.add_argument(
+        "-s", "--separator", type=str, help="Define file part separator"
+    )
+    parser.add_argument(
         "-e",
         "--excel",
         action="store_true",
@@ -289,6 +296,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    separator = args.separator if args.separator else "-p"
+
     aggregate_mscl_data(
-        args.input_directory, args.output_filename, args.excel, args.verbose
+        args.input_directory, args.output_filename, separator, args.excel, args.verbose
     )
