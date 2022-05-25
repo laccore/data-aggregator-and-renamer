@@ -97,13 +97,19 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     - the 'latin1' encoding flag is needed to open the .raw files
     """
 
+    num_cols = len(pd.read_csv(file_path, skiprows=skip_rows, nrows=1).columns)
+
     df = pd.read_csv(
         file_path,
         delimiter=delimiter,
         skiprows=skip_rows,
         na_filter=False,
         encoding="latin1",
+        header=None,
+        on_bad_lines=lambda x: x[:num_cols],
+        engine="python",
     )
+
     df = df.rename(str.strip, axis="columns")
     df = df.drop(drop_rows)
     df = df[~df.eq("").all(1)]
