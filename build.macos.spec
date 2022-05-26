@@ -29,7 +29,7 @@ exe = EXE(pyz,
           icon=os.path.join(gooey_root, 'images', 'program_icon.ico'))
 
 app = BUNDLE(exe,
-             name='CSDCO Data Aggregator.app',
+             name='CSD Data Aggregator.app',
              icon=None,
              bundle_identifier=None,
              info_plist={
