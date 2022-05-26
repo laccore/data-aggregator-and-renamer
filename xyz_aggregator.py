@@ -93,6 +93,9 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     Notes on files:
     - tell pandas to treat empty fields as empty strings, not NaNs
     - the 'latin1' encoding flag is needed to open the .raw files
+    - on_bad_lines (requires engine="python") is there to handle poorly
+      formatted csv files with extra columns in part of the file
+    - na_filter=False means empty cells aren't converted into NaN
     """
 
     num_cols = len(pd.read_csv(file_path, skiprows=skip_rows, nrows=1).columns)
