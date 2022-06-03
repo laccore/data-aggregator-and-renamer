@@ -100,7 +100,10 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
     - na_filter=False means empty cells aren't converted into NaN
     """
 
-    num_cols = len(pd.read_csv(file_path, skiprows=skip_rows, nrows=1).columns)
+    # num_cols = len(
+    #     pd.read_csv(file_path, delimiter=delimiter, skiprows=skip_rows, nrows=1).columns
+    # )
+    # print(f"{num_cols=}")
 
     df = pd.read_csv(
         file_path,
@@ -108,11 +111,13 @@ def open_and_clean_file(file_path, delimiter, skip_rows, drop_rows):
         skiprows=skip_rows,
         na_filter=False,
         encoding="latin1",
-        header=None,
-        on_bad_lines=lambda x: x[:num_cols],
-        engine="python",
+        # header=None,
+        # on_bad_lines=lambda x: x[:num_cols],
+        # engine="python",
     )
 
+    # print(file_path)
+    # print(df)
     df = df.rename(str.strip, axis="columns")
     df = df.drop(drop_rows)
     df = df[~df.eq("").all(1)]  # removes empty rows (inconsistent number across files)
@@ -176,7 +181,12 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
 
 
 def aggregate_mscl_data(
-    input_dir, out_filename, separator="-p", excel=False, verbose=False
+    input_dir,
+    out_filename,
+    separator="-p",
+    drop_columns=[],
+    excel=False,
+    verbose=False,
 ):
     """Aggregate cleaned data from different files and folders, export."""
     if verbose:
@@ -204,7 +214,7 @@ def aggregate_mscl_data(
     # For .raw files, the second row is also dropped because the Geotek
     # software for the raw files is always off by one compared to the .out
     # files.
-    skip_rows = [0]  # skip first row of mscl output files
+    skip_rows = 3  # skip first n row(s) of mscl output files
 
     for out, raw in file_list:
         if verbose:
@@ -212,10 +222,10 @@ def aggregate_mscl_data(
             print()
 
         out_df = open_and_clean_file(
-            file_path=out, delimiter="\t", skip_rows=skip_rows, drop_rows=[0]
+            file_path=out, delimiter="\t", skip_rows=skip_rows, drop_rows=[1, 2]
         )
         raw_df = open_and_clean_file(
-            file_path=raw, delimiter="\t", skip_rows=skip_rows, drop_rows=[0, 1]
+            file_path=raw, delimiter="\t", skip_rows=skip_rows, drop_rows=[1, 2]
         )
 
         if verbose:
@@ -247,10 +257,15 @@ def aggregate_mscl_data(
                     print()
 
         # Append new data to existing data from other files
-        combined_df = combined_df.append(out_df, sort=True)
+        # combined_df = combined_df.append(out_df, sort=True)
+        combined_df = pd.concat([combined_df, out_df], sort=True)
 
     if verbose:
         print(f"All data combined ({len(combined_df)} rows).")
+
+    # Drop specified columns, if any
+    if drop_columns:
+        column_order = [c for c in column_order if c not in drop_columns]
 
     # Drop unused headers, add units, and make headers human readable
     # "SB DEPTH" is dropped because it is not relevant and often confusing.
@@ -306,7 +321,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     separator = args.separator if args.separator else "-p"
+    drop_columns = ["K", "U", "Th"]
 
     aggregate_mscl_data(
-        args.input_directory, args.output_filename, separator, args.excel, args.verbose
+        args.input_directory,
+        args.output_filename,
+        separator,
+        drop_columns,
+        args.excel,
+        args.verbose,
     )
