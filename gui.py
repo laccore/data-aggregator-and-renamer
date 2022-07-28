@@ -33,6 +33,15 @@ def main():
         type=str,
         help="Name of the combined output file.",
     )
+    input_output_mst.add_argument(
+        "separator",
+        metavar="Data Directory Naming Convention",
+        help="Text portion of data directory name preceding part number e.g. '-p' for -p1, -p2, -p3... or '_part' for _part1, _part2, _part3...",
+        type=str,
+        widget="Dropdown",
+        choices=["_p", "_part", "-p", "-part"],
+        default="_p"
+    )
     options_mst = mst_parser.add_argument_group("Options", gooey_options={"columns": 1})
     options_mst.add_argument(
         "-e",
@@ -63,6 +72,15 @@ def main():
         metavar="Output Filename",
         type=str,
         help="Name of the combined output file.",
+    )
+    input_output_xyz.add_argument(
+        "separator",
+        metavar="Data Directory Naming Convention",
+        help="Text portion of data directory name preceding part number e.g. '-p' for -p1, -p2, -p3... or '_part' for _part1, _part2, _part3...",
+        type=str,
+        widget="Dropdown",
+        choices=["_p", "_part", "-p", "-part"],
+        default="_p"
     )
     options_xyz = xyz_parser.add_argument_group("Options", gooey_options={"columns": 1})
     options_xyz.add_argument(
@@ -183,6 +201,7 @@ def main():
         mst.aggregate_mscl_data(
             input_dir=args.input_directory,
             out_filename=args.output_filename,
+            separator=args.separator,
             excel=args.excel,
             verbose=args.verbose,
         )
@@ -191,6 +210,7 @@ def main():
         xyz.aggregate_xyz_data(
             input_dir=args.input_directory,
             out_filename=args.output_filename,
+            separator=args.separator,
             filter=args.filter,
             excel=args.excel,
             verbose=args.verbose,
