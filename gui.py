@@ -7,7 +7,7 @@ import xyz_aggregator as xyz
 
 
 @Gooey(
-    program_name="Data Aggregator and Renamer ",
+    program_name=f"Data Aggregator and Renamer {renamer.version}",
     navigation="TABBED",
     default_size=(600, 680),
 )
