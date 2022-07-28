@@ -235,7 +235,8 @@ def aggregate_mscl_data(
             print()
 
         # Add "Temp" column from .raw file to .out file dataframe
-        out_df["Temp"] = raw_df["Temp"]
+        if "Temp" in raw_df.columns:
+            out_df["Temp"] = raw_df["Temp"]
 
         # This records column order for the first file, then adds
         # successive columns at the second to last place, keeping Temp
