@@ -184,7 +184,7 @@ def aggregate_mscl_data(
     input_dir,
     out_filename,
     separator="_p",
-    drop_columns=[],
+    drop_columns=["K", "U", "Th"],
     excel=False,
     verbose=False,
 ):
