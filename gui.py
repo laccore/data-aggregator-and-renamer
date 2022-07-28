@@ -79,8 +79,8 @@ def main():
         help="Text portion of data directory name preceding part number e.g. '-p' for -p1, -p2, -p3... or '_part' for _part1, _part2, _part3...",
         type=str,
         widget="Dropdown",
-        choices=["_p", "_part", "-p", "-part"],
-        default="_p"
+        choices=["-p", "-part", "_p", "_part"],
+        default="-p"
     )
     options_xyz = xyz_parser.add_argument_group("Options", gooey_options={"columns": 1})
     options_xyz.add_argument(
