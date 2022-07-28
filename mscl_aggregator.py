@@ -222,10 +222,10 @@ def aggregate_mscl_data(
             print()
 
         out_df = open_and_clean_file(
-            file_path=out, delimiter="\t", skip_rows=skip_rows, drop_rows=[1, 2]
+            file_path=out, delimiter="\t", skip_rows=skip_rows, drop_rows=[0]
         )
         raw_df = open_and_clean_file(
-            file_path=raw, delimiter="\t", skip_rows=skip_rows, drop_rows=[1, 2]
+            file_path=raw, delimiter="\t", skip_rows=skip_rows, drop_rows=[0]
         )
 
         if verbose:
