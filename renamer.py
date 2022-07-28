@@ -19,7 +19,7 @@ import timeit
 
 import chardet
 
-version = "1.0.1"
+version = "1.2.0"
 
 
 def guess_file_encoding(input_file, verbose=False):
