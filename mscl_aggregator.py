@@ -183,7 +183,7 @@ def clean_headers_add_units(dataframe, column_order, drop_headers=[]):
 def aggregate_mscl_data(
     input_dir,
     out_filename,
-    separator="-p",
+    separator="_p",
     drop_columns=[],
     excel=False,
     verbose=False,
