@@ -80,7 +80,7 @@ def main():
         type=str,
         widget="Dropdown",
         choices=["-p", "-part", "_p", "_part"],
-        default="-p"
+        default="-part"
     )
     options_xyz = xyz_parser.add_argument_group("Options", gooey_options={"columns": 1})
     options_xyz.add_argument(

@@ -249,8 +249,6 @@ def aggregate_xyz_data(
     # Unit row (row 0) is dropped and added later
     skip_rows = 3  # skip first n rows, unrelated metadata
 
-    # Munsell Colour isn't a column we want, but it is sometimes accidentally exported
-    # drop_columns = ['Munsell Colour']
 
     for file_name in file_list:
         xyz_df = open_and_clean_file(
@@ -300,7 +298,8 @@ def aggregate_xyz_data(
             print("Filtered invalid magnetic susceptibility values.")
 
     # Drop unused columns, add units, and make headers human readable
-    drop_columns = ["Depth", "Core Depth", "Munsell Colour", "Time Stamp"]
+    # Munsell color no longer dropped, "Depth In Core" dropped [D.Grzesik 11-10-2-22]
+    drop_columns = ["Depth In Core","Depth", "Core Depth", "Time Stamp"]
     combined_df, column_order = clean_headers_add_units(
         dataframe=combined_df, column_order=column_order, drop_headers=drop_columns
     )
